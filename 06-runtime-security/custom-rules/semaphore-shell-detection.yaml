@@ -1,0 +1,70 @@
+# Falco Custom Rules - Shell Detection u Semaphore podovima
+# Detekcija pokretanja shell-a u production kontejnerima
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-rules-shell-detection
+  namespace: falco
+  labels:
+    app.kubernetes.io/name: falco
+    app.kubernetes.io/component: rules
+data:
+  semaphore-shell-detection.yaml: |
+    # Shell execution detection u production podovima
+    - rule: Shell Spawned in Semaphore Production Pod
+      desc: >
+        Detektuje pokretanje shell-a u production Semaphore servisima.
+        Ovo može indicirati kompromitaciju servisa ili neautorizovani pristup.
+      condition: >
+        spawned_process and container and
+        proc.name in (bash, sh, zsh, ash, dash) and
+        k8s.ns.name = "semaphore" and
+        k8s.deployment.name in (guard, front, controller, artifacthub, projecthub, branchhub) and
+        not proc.pname in (npm, node, mix, beam.smp, erl)
+      output: >
+        Shell spawned in production pod
+        (user=%user.name user_uid=%user.uid command=%proc.cmdline
+        parent=%proc.pname pod=%k8s.pod.name namespace=%k8s.ns.name
+        deployment=%k8s.deployment.name image=%container.image.repository
+        container_id=%container.id)
+      priority: CRITICAL
+      source: syscall
+      tags: [container, shell, semaphore, mitre_execution]
+
+    # Detekcija reverse shell pokušaja
+    - rule: Reverse Shell Attempt in Semaphore
+      desc: Detekcija pokušaja uspostavljanja reverse shell-a
+      condition: >
+        spawned_process and container and
+        k8s.ns.name = "semaphore" and
+        (
+          (proc.name in (bash, sh) and proc.cmdline contains "-i") or
+          (proc.cmdline contains "/dev/tcp/") or
+          (proc.cmdline contains "nc -e") or
+          (proc.cmdline contains "netcat -e")
+        )
+      output: >
+        Potential reverse shell attempt detected
+        (user=%user.name command=%proc.cmdline pod=%k8s.pod.name
+        namespace=%k8s.ns.name image=%container.image.repository)
+      priority: CRITICAL
+      source: syscall
+      tags: [container, shell, reverse_shell, semaphore, mitre_command_and_control]
+
+    # Detekcija curl/wget za download malicioznog payloada
+    - rule: Suspicious Download in Semaphore Pod
+      desc: Detekcija sumnjivog preuzimanja fajlova u runtime
+      condition: >
+        spawned_process and container and
+        k8s.ns.name = "semaphore" and
+        proc.name in (curl, wget) and
+        not proc.cmdline contains "healthcheck" and
+        not proc.cmdline contains "localhost" and
+        not proc.cmdline contains "127.0.0.1"
+      output: >
+        Suspicious download activity in pod
+        (user=%user.name command=%proc.cmdline pod=%k8s.pod.name
+        namespace=%k8s.ns.name image=%container.image.repository)
+      priority: WARNING
+      source: syscall
+      tags: [container, network, download, semaphore, mitre_command_and_control]

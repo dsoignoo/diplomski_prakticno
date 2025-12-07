@@ -1,0 +1,77 @@
+# NetworkPolicy za Hooks Processor servis
+# Hooks Processor prima GitHub webhook events i procesira ih
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hooks-processor-networkpolicy
+  namespace: semaphore
+  labels:
+    app.kubernetes.io/name: semaphore
+    app.kubernetes.io/component: hooks-processor
+    security.semaphore.io/policy: component-specific
+spec:
+  podSelector:
+    matchLabels:
+      app: hooks-processor
+
+  policyTypes:
+  - Ingress
+  - Egress
+
+  ingress:
+  # Allow from Ingress controller (GitHub webhooks dolaze preko Ingress-a)
+  - from:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8080
+
+  # Allow from GitHub Hooks service (internal routing)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: github-hooks
+    ports:
+    - protocol: TCP
+      port: 8080
+
+  egress:
+  # Allow to RabbitMQ (publish job events to queue)
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: rabbitmq
+    ports:
+    - protocol: TCP
+      port: 5672
+
+  # Allow to Redis (caching, deduplication)
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+
+  # Allow to external GitHub API (webhook signature verification)
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+
+  # DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

@@ -1,0 +1,110 @@
+# NetworkPolicy za Guard (Authentication & Authorization) servis
+# Guard je kritična komponenta - autentikacija, autorizacija, session management
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: guard-networkpolicy
+  namespace: semaphore
+  labels:
+    app.kubernetes.io/name: semaphore
+    app.kubernetes.io/component: guard
+    security.semaphore.io/policy: component-specific
+    security.semaphore.io/criticality: high
+spec:
+  podSelector:
+    matchLabels:
+      app: guard
+      component: api
+
+  policyTypes:
+  - Ingress
+  - Egress
+
+  ingress:
+  # Allow traffic from Front (Web UI)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: front
+          component: web
+    ports:
+    - protocol: TCP
+      port: 4000
+
+  # Allow traffic from Ingress controller (direct API access)
+  - from:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 4000
+
+  # Allow traffic from other Guard pods (internal communication)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: guard
+    ports:
+    - protocol: TCP
+      port: 4000
+
+  # Allow traffic from API Gateway (ako postoji)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: public-api-gateway
+    ports:
+    - protocol: TCP
+      port: 4000
+
+  egress:
+  # Allow to PostgreSQL (user data, sessions, permissions)
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: postgresql
+    ports:
+    - protocol: TCP
+      port: 5432
+
+  # Allow to RBAC service (permission checks via gRPC)
+  - to:
+    - podSelector:
+        matchLabels:
+          app: rbac
+    ports:
+    - protocol: TCP
+      port: 50051  # gRPC port
+
+  # Allow to Redis (session caching, rate limiting data)
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+  # Allow to Google Cloud APIs (Workload Identity - Secret Manager, Cloud Storage)
+  # GKE metadata server access za Workload Identity tokens
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80

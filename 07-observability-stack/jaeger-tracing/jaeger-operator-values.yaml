@@ -1,0 +1,34 @@
+# Jaeger Operator Helm values
+# Instalacija: helm install jaeger-operator jaegertracing/jaeger-operator -f jaeger-operator-values.yaml -n observability
+
+# Jaeger Operator configuration
+rbac:
+  create: true
+  pspEnabled: false
+
+# Image configuration
+image:
+  repository: jaegertracing/jaeger-operator
+  tag: 1.51.0
+  pullPolicy: IfNotPresent
+
+# Resources
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Webhook configuration
+webhook:
+  create: true
+  service:
+    port: 443
+
+# CRD management
+crd:
+  install: true
+
+# Jaeger instance će biti kreiran kroz Jaeger CR (vidi jaeger-instance.yaml)

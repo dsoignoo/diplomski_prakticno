@@ -1,0 +1,62 @@
+# Falco Configuration for Semaphore Platform
+# Phase 06: Runtime Security
+
+driver:
+  kind: modern_ebpf  # Use modern eBPF driver (no kernel module needed)
+
+tty: true
+json_output: true
+json_include_output_property: true
+
+falcosidekick:
+  enabled: true
+  webui:
+    enabled: true
+  config:
+    debug: false
+    # Send Falco alerts to Loki
+    loki:
+      hostport: http://loki-gateway.monitoring.svc.cluster.local
+      tenant: falco
+      endpoint: /loki/api/v1/push
+
+# Custom rules for Semaphore platform
+customRules:
+  semaphore-rules.yaml: |-
+    - macro: semaphore_container
+      condition: (container.image.repository contains "semaphoreio" or k8s.ns.name = "default")
+
+    - rule: Shell Spawned in Semaphore Container
+      desc: Detect shell execution in Semaphore microservices
+      condition: >
+        spawned_process and container and semaphore_container and
+        proc.name in (sh, bash, zsh, dash, ksh)
+      output: >
+        Shell spawned in Semaphore container
+        (user=%user.name container=%container.name image=%container.image.repository
+         ns=%k8s.ns.name pod=%k8s.pod.name command=%proc.cmdline)
+      priority: WARNING
+      tags: [semaphore, shell, runtime, T1059]
+
+    - rule: Semaphore Privilege Escalation Attempt
+      desc: Detect privilege escalation in Semaphore containers
+      condition: >
+        spawned_process and container and semaphore_container and
+        proc.name in (sudo, su)
+      output: >
+        Privilege escalation attempt in Semaphore
+        (user=%user.name process=%proc.name container=%container.name
+         image=%container.image.repository pod=%k8s.pod.name command=%proc.cmdline)
+      priority: CRITICAL
+      tags: [semaphore, privilege_escalation, T1068]
+
+    - rule: Unexpected File Write in Semaphore
+      desc: Detect suspicious file writes indicating persistence
+      condition: >
+        open_write and container and semaphore_container and
+        (fd.name startswith /etc/ or fd.name startswith /root/.ssh/)
+      output: >
+        Unexpected file write in Semaphore container
+        (user=%user.name file=%fd.name container=%container.name pod=%k8s.pod.name)
+      priority: WARNING
+      tags: [semaphore, persistence, T1543]

@@ -1,0 +1,165 @@
+# Kompletni DevSecOps Pipeline za SemaphoreCI
+# Uključuje sve sigurnosne provjere prema best practices
+version: v1.0
+name: DevSecOps Security Pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2204
+
+global_job_config:
+  secrets:
+    - name: docker-hub
+    - name: cosign-keys
+    - name: gcp-credentials
+
+blocks:
+  # Faza 1: Secret Detection (pre-commit)
+  - name: "Secret Detection"
+    task:
+      jobs:
+        - name: Gitleaks Scan
+          commands:
+            - checkout
+            - |
+              wget -qO- https://github.com/gitleaks/gitleaks/releases/download/v8.18.0/gitleaks_8.18.0_linux_x64.tar.gz | tar xz
+              sudo mv gitleaks /usr/local/bin/
+            - gitleaks detect --source . --verbose --exit-code 1
+            - echo "Secret detection PASSED"
+
+  # Faza 2: SAST (Static Analysis)
+  - name: "SAST Analysis"
+    task:
+      jobs:
+        - name: Semgrep Scan
+          commands:
+            - checkout
+            - pip3 install semgrep
+            - |
+              semgrep scan \
+                --config=auto \
+                --config=p/security-audit \
+                --config=p/owasp-top-ten \
+                --sarif --output=semgrep-results.sarif \
+                --error \
+                .
+            - artifact push workflow semgrep-results.sarif
+
+  # Faza 3: Build
+  - name: "Build"
+    task:
+      jobs:
+        - name: Build Docker Image
+          commands:
+            - checkout
+            - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            - |
+              docker build \
+                --label "org.opencontainers.image.revision=$SEMAPHORE_GIT_SHA" \
+                --label "org.opencontainers.image.source=$SEMAPHORE_GIT_URL" \
+                -t $DOCKER_USERNAME/semaphore-app:$SEMAPHORE_GIT_SHA .
+            - docker push $DOCKER_USERNAME/semaphore-app:$SEMAPHORE_GIT_SHA
+
+  # Faza 4: Container Security Scanning
+  - name: "Container Security"
+    task:
+      jobs:
+        - name: Trivy Vulnerability Scan
+          commands:
+            - checkout
+            - |
+              wget -qO- https://github.com/aquasecurity/trivy/releases/download/v0.50.1/trivy_0.50.1_Linux-64bit.tar.gz | tar xz
+              sudo mv trivy /usr/local/bin/
+            # Scan za vulnerabilnosti
+            - |
+              trivy image \
+                --severity CRITICAL,HIGH \
+                --exit-code 1 \
+                --format json \
+                --output trivy-vuln-report.json \
+                $DOCKER_USERNAME/semaphore-app:$SEMAPHORE_GIT_SHA
+            - artifact push workflow trivy-vuln-report.json
+
+        - name: Trivy IaC Scan
+          commands:
+            - checkout
+            - |
+              wget -qO- https://github.com/aquasecurity/trivy/releases/download/v0.50.1/trivy_0.50.1_Linux-64bit.tar.gz | tar xz
+              sudo mv trivy /usr/local/bin/
+            # Scan Kubernetes manifesta za misconfigurations
+            - |
+              trivy config \
+                --severity CRITICAL,HIGH \
+                --exit-code 1 \
+                --format json \
+                --output trivy-iac-report.json \
+                ./k8s/
+            - artifact push workflow trivy-iac-report.json
+
+  # Faza 5: SBOM Generation
+  - name: "SBOM Generation"
+    task:
+      jobs:
+        - name: Generate SBOM
+          commands:
+            - checkout
+            - |
+              curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+            # Generiši SBOM u CycloneDX formatu
+            - |
+              syft $DOCKER_USERNAME/semaphore-app:$SEMAPHORE_GIT_SHA \
+                --output cyclonedx-json=sbom.json
+            - artifact push workflow sbom.json
+            # Skeniraj SBOM za poznate ranjivosti
+            - |
+              wget -qO- https://github.com/aquasecurity/trivy/releases/download/v0.50.1/trivy_0.50.1_Linux-64bit.tar.gz | tar xz
+              sudo mv trivy /usr/local/bin/
+              trivy sbom sbom.json --severity HIGH,CRITICAL
+
+  # Faza 6: Image Signing
+  - name: "Image Signing"
+    task:
+      jobs:
+        - name: Cosign Sign Image
+          commands:
+            - checkout
+            - |
+              wget -qO- https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-amd64 > cosign
+              chmod +x cosign
+              sudo mv cosign /usr/local/bin/
+            # Potpiši image koristeći keyless signing (OIDC)
+            - cosign sign --yes $DOCKER_USERNAME/semaphore-app:$SEMAPHORE_GIT_SHA
+            # Attach SBOM
+            - cosign attach sbom --sbom sbom.json $DOCKER_USERNAME/semaphore-app:$SEMAPHORE_GIT_SHA
+            # Potpiši SBOM
+            - cosign sign --yes --attachment sbom $DOCKER_USERNAME/semaphore-app:$SEMAPHORE_GIT_SHA
+            # Verifikacija
+            - |
+              cosign verify \
+                --certificate-identity-regexp=".*@semaphore\.io" \
+                --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+                $DOCKER_USERNAME/semaphore-app:$SEMAPHORE_GIT_SHA
+
+  # Faza 7: Deploy
+  - name: "Deploy to Production"
+    run:
+      when: "branch = 'main'"
+    task:
+      jobs:
+        - name: Kubernetes Deploy
+          commands:
+            - checkout
+            # Setup kubectl
+            - |
+              echo "$GCP_SA_KEY" | base64 -d > /tmp/gcp-key.json
+              gcloud auth activate-service-account --key-file=/tmp/gcp-key.json
+              gcloud container clusters get-credentials prod-cluster --zone europe-west1-b
+            # Update image tag
+            - |
+              kubectl set image deployment/semaphore-app \
+                app=$DOCKER_USERNAME/semaphore-app:$SEMAPHORE_GIT_SHA \
+                -n semaphore
+            # Wait for rollout
+            - kubectl rollout status deployment/semaphore-app -n semaphore --timeout=300s
+            # Verify
+            - kubectl get pods -n semaphore -l app=semaphore-app

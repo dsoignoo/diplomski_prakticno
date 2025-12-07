@@ -1,0 +1,98 @@
+# Kyverno politika za blokiranje ranjivosti
+# Ova politika blokira deployment slika sa kritičnim ranjivostima
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-vulnerable-images
+  annotations:
+    policies.kyverno.io/title: Block Vulnerable Images
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Ova politika blokira deployment kontejner slika koje imaju
+      kritične sigurnosne ranjivosti prema Trivy skeniranju.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: check-vulnerabilities
+    match:
+      resources:
+        kinds:
+        - Pod
+    mutate:
+      operations: PATCH
+      patchType: JSONPatch
+      patchStrategicMerge:
+        spec:
+          containers:
+          - (name): "*"
+            image: "{{ request.object.spec.containers[0].image }}"
+            imagePullPolicy: Always
+    validate:
+      message: "Image has critical vulnerabilities"
+      deny:
+        conditions:
+        - key: "{{ exec('trivy', ['image', '--quiet', '--severity', 'CRITICAL', '--exit-code', '1', '{{ request.object.spec.containers[0].image }}'], '') }}"
+          operator: Equals
+          value: "1"
+---
+# Kyverno politika za provjeru image digestova
+# Osigurava da se koriste immutable image reference
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-image-digest
+  annotations:
+    policies.kyverno.io/title: Require Image Digest
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Zahtijeva da sve kontejner slike koriste digest umjesto tagova
+      za osiguranje immutability.
+spec:
+  validationFailureAction: audit
+  background: true
+  rules:
+  - name: require-digest
+    match:
+      resources:
+        kinds:
+        - Pod
+    validate:
+      message: "Image reference must use digest (@sha256:...)"
+      pattern:
+        spec:
+          containers:
+          - image: "*@sha256:*"
+---
+# Kyverno politika za blokiranje latest taga
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow Latest Tag
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Blokira korištenje :latest taga za kontejner slike jer
+      može dovesti do neočekivanih promjena u produkciji.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: disallow-latest-tag
+    match:
+      resources:
+        kinds:
+        - Pod
+    validate:
+      message: "Using ':latest' tag is not allowed. Please specify a specific version tag."
+      pattern:
+        spec:
+          containers:
+          - image: "!*:latest"

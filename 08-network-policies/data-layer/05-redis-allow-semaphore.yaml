@@ -1,0 +1,22 @@
+# Network Policy: Allow Semaphore services to access Redis
+# This creates a least-privilege allowlist for cache access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-allow-semaphore
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  ingress:
+  # Allow access from all pods with product=semaphoreci label
+  - from:
+    - podSelector:
+        matchLabels:
+          product: semaphoreci
+    ports:
+    - protocol: TCP
+      port: 6379

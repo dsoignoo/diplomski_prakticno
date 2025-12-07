@@ -1,0 +1,128 @@
+# Semaphore CI/CD Pipeline: Container Security Scanning with Trivy
+#
+# This pipeline demonstrates Phase 03 security controls:
+# - Automated vulnerability scanning with Trivy
+# - Blocking deployments with CRITICAL vulnerabilities
+# - Generating security reports (JSON + human-readable)
+# - Future: Image signing with Cosign (Phase 03 Step 2)
+
+version: v1.0
+name: Security Scanning Pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2204
+
+blocks:
+  - name: "Vulnerability Scanning"
+    task:
+      secrets:
+        - name: docker-hub # Optional: for rate limiting
+      prologue:
+        commands:
+          - checkout
+          # Install Trivy
+          - wget https://github.com/aquasecurity/trivy/releases/download/v0.50.1/trivy_0.50.1_Linux-64bit.tar.gz
+          - tar -xzf trivy_0.50.1_Linux-64bit.tar.gz
+          - sudo mv trivy /usr/local/bin/
+          - trivy --version
+
+      jobs:
+        - name: "Scan Critical Services"
+          commands:
+            - echo "Scanning critical Semaphore images..."
+
+            # Define critical services to scan
+            - |
+              CRITICAL_IMAGES=(
+                "ghcr.io/semaphoreio/guard:71d97737dcd4c147dd48d8971b14a2e0f4b92710"
+                "ghcr.io/semaphoreio/front:c4bdd9c00662df0ccc0f0a5731d81e39b96ea844"
+                "ghcr.io/semaphoreio/auth:570873cccc0c443e433697a0efb7a3f33d6f3ecd"
+                "ghcr.io/semaphoreio/projecthub:9480e60fb47ca8d7caf3cfd7ddcdaa0f5ffd2ced"
+                "ghcr.io/semaphoreio/bootstrapper:3dc98d61830f896779dcbc8ac351937a767246a9"
+              )
+
+            # Scan each image
+            - mkdir -p scan-results
+            - |
+              CRITICAL_FOUND=0
+              for IMAGE in "${CRITICAL_IMAGES[@]}"; do
+                echo "Scanning $IMAGE..."
+
+                # Scan and save JSON report
+                SERVICE=$(echo "$IMAGE" | cut -d'/' -f3 | cut -d':' -f1)
+                trivy image \
+                  --severity HIGH,CRITICAL \
+                  --format json \
+                  --output "scan-results/${SERVICE}.json" \
+                  "$IMAGE" || true
+
+                # Generate human-readable report
+                trivy image \
+                  --severity HIGH,CRITICAL \
+                  --format table \
+                  "$IMAGE" | tee "scan-results/${SERVICE}.txt"
+
+                # Check for CRITICAL vulnerabilities
+                CRITICAL_COUNT=$(jq -r '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' "scan-results/${SERVICE}.json" 2>/dev/null || echo 0)
+
+                if [ "$CRITICAL_COUNT" -gt 0 ]; then
+                  echo "❌ CRITICAL: Found $CRITICAL_COUNT CRITICAL vulnerabilities in $SERVICE"
+                  CRITICAL_FOUND=$((CRITICAL_FOUND + CRITICAL_COUNT))
+                else
+                  echo "✅ PASS: No CRITICAL vulnerabilities in $SERVICE"
+                fi
+              done
+
+            # Upload scan artifacts
+            - artifact push workflow scan-results
+
+            # Block deployment if CRITICAL vulnerabilities found
+            - |
+              if [ $CRITICAL_FOUND -gt 0 ]; then
+                echo ""
+                echo "========================================="
+                echo "❌ DEPLOYMENT BLOCKED"
+                echo "========================================="
+                echo "Total CRITICAL vulnerabilities: $CRITICAL_FOUND"
+                echo "Action required: Remediate CRITICAL CVEs before deployment"
+                echo ""
+                exit 1
+              else
+                echo ""
+                echo "========================================="
+                echo "✅ SECURITY CHECK PASSED"
+                echo "========================================="
+                echo "No CRITICAL vulnerabilities detected"
+                echo "Deployment approved"
+                echo ""
+                exit 0
+              fi
+
+  - name: "Image Signing (Future)"
+    run:
+      when: "branch = 'main' AND result = 'passed'"
+    task:
+      prologue:
+        commands:
+          - echo "Image signing with Cosign will be implemented in Phase 03 Step 2"
+          - echo "For now, this is a placeholder block"
+
+      jobs:
+        - name: "Sign Container Images"
+          commands:
+            - echo "TODO: Install Cosign"
+            - echo "TODO: Sign images with private key stored in Google KMS"
+            - echo "TODO: Upload signatures to OCI registry"
+            - echo "TODO: Verify signatures"
+
+promotions:
+  - name: Deploy to Staging
+    pipeline_file: deploy-staging.yml
+    auto_promote:
+      when: "result = 'passed' AND branch = 'main'"
+
+  - name: Deploy to Production
+    pipeline_file: deploy-production.yml
+    auto_promote:
+      when: "result = 'passed' AND branch = 'release/*'"

@@ -1,0 +1,56 @@
+# Velero automatski backup schedule
+# Dnevni backup u 2:00 AM sa 30 dana retention
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: semaphore-daily-backup
+  namespace: velero
+spec:
+  # Cron schedule: svaki dan u 2:00 AM
+  schedule: "0 2 * * *"
+  template:
+    # Uključi semaphore namespace
+    includedNamespaces:
+    - semaphore
+    # Uključi sve resurse
+    includedResources:
+    - '*'
+    # Isključi events (nepotrebni za restore)
+    excludedResources:
+    - events
+    - events.events.k8s.io
+    # Uključi cluster-scoped resurse (RBAC, CRDs)
+    includeClusterResources: true
+    # Backup persistent volumes
+    snapshotVolumes: true
+    # Retention: 30 dana
+    ttl: 720h0m0s
+    # Storage lokacija
+    storageLocation: default
+    volumeSnapshotLocations:
+    - default
+    # Labele za organizaciju
+    metadata:
+      labels:
+        backup-type: scheduled
+        environment: production
+---
+# Hourly backup za kritične namespace-ove (manji RPO)
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: semaphore-hourly-backup
+  namespace: velero
+spec:
+  schedule: "0 * * * *"
+  template:
+    includedNamespaces:
+    - semaphore
+    includedResources:
+    - secrets
+    - configmaps
+    - persistentvolumeclaims
+    snapshotVolumes: true
+    ttl: 168h0m0s  # 7 dana retention
+    storageLocation: default

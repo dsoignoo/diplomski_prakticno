@@ -1,0 +1,226 @@
+# Filebeat DaemonSet za shipping logova u Elasticsearch
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: elk
+  labels:
+    app: filebeat
+data:
+  filebeat.yml: |-
+    filebeat.inputs:
+    # Container logs
+    - type: container
+      paths:
+        - /var/log/containers/*.log
+      processors:
+        # Add Kubernetes metadata
+        - add_kubernetes_metadata:
+            host: ${NODE_NAME}
+            matchers:
+            - logs_path:
+                logs_path: "/var/log/containers/"
+        # Drop non-Semaphore logs (samo semaphore i falco namespace)
+        - drop_event:
+            when:
+              not:
+                or:
+                  - equals:
+                      kubernetes.namespace: "semaphore"
+                  - equals:
+                      kubernetes.namespace: "falco"
+        # Parse JSON logs
+        - decode_json_fields:
+            fields: ["message"]
+            target: "json"
+            overwrite_keys: true
+
+    # Kubernetes audit logs (ako su omogućeni)
+    - type: log
+      enabled: false
+      paths:
+        - /var/log/kubernetes/audit.log
+      json.keys_under_root: true
+      json.add_error_key: true
+      processors:
+        - add_fields:
+            target: ''
+            fields:
+              event.dataset: kubernetes.audit
+
+    # Output configuration
+    output.elasticsearch:
+      hosts: ['https://semaphore-es-http:9200']
+      username: ${ELASTICSEARCH_USERNAME}
+      password: ${ELASTICSEARCH_PASSWORD}
+      ssl:
+        certificate_authorities:
+          - /etc/filebeat/certs/ca.crt
+        verification_mode: certificate
+      # Index patterns
+      indices:
+        - index: "falco-%{+yyyy.MM.dd}"
+          when.equals:
+            kubernetes.namespace: "falco"
+        - index: "filebeat-%{[agent.version]}-%{+yyyy.MM.dd}"
+
+    # Processor settings
+    processors:
+      - add_host_metadata: {}
+      - add_cloud_metadata: {}
+      - add_docker_metadata: {}
+
+    # Logging
+    logging.level: info
+    logging.to_files: true
+    logging.files:
+      path: /var/log/filebeat
+      name: filebeat
+      keepfiles: 7
+      permissions: 0644
+
+    # Monitoring
+    monitoring.enabled: true
+    monitoring.elasticsearch:
+      hosts: ['https://semaphore-es-http:9200']
+      username: ${ELASTICSEARCH_USERNAME}
+      password: ${ELASTICSEARCH_PASSWORD}
+      ssl:
+        certificate_authorities:
+          - /etc/filebeat/certs/ca.crt
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: filebeat
+  namespace: elk
+  labels:
+    app: filebeat
+spec:
+  selector:
+    matchLabels:
+      app: filebeat
+  template:
+    metadata:
+      labels:
+        app: filebeat
+    spec:
+      serviceAccountName: filebeat
+      terminationGracePeriodSeconds: 30
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+
+      containers:
+      - name: filebeat
+        image: docker.elastic.co/beats/filebeat:8.11.0
+        args: [
+          "-c", "/etc/filebeat.yml",
+          "-e",
+        ]
+        env:
+        - name: ELASTICSEARCH_USERNAME
+          value: elastic
+        - name: ELASTICSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: semaphore-es-elastic-user
+              key: elastic
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+
+        securityContext:
+          runAsUser: 0
+          # Privileged za pristup host logs
+          privileged: true
+
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: 200m
+          requests:
+            cpu: 100m
+            memory: 256Mi
+
+        volumeMounts:
+        - name: config
+          mountPath: /etc/filebeat.yml
+          readOnly: true
+          subPath: filebeat.yml
+        - name: data
+          mountPath: /usr/share/filebeat/data
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: varlog
+          mountPath: /var/log
+          readOnly: true
+        - name: es-certs
+          mountPath: /etc/filebeat/certs
+          readOnly: true
+
+      volumes:
+      - name: config
+        configMap:
+          defaultMode: 0640
+          name: filebeat-config
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: data
+        hostPath:
+          path: /var/lib/filebeat-data
+          type: DirectoryOrCreate
+      - name: es-certs
+        secret:
+          secretName: semaphore-es-http-certs-public
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: filebeat
+  namespace: elk
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: filebeat
+rules:
+- apiGroups: [""]
+  resources:
+  - namespaces
+  - pods
+  - nodes
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups: ["apps"]
+  resources:
+  - replicasets
+  verbs:
+  - get
+  - list
+  - watch
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: filebeat
+subjects:
+- kind: ServiceAccount
+  name: filebeat
+  namespace: elk
+roleRef:
+  kind: ClusterRole
+  name: filebeat
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,47 @@
+# ConstraintTemplate: Zabranjuje privilegovane kontejnere
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8spspprivilegedcontainer
+  annotations:
+    description: >-
+      Zabranjuje kreiranje privilegovanih kontejnera koji mogu ugroziti
+      sigurnost node-a
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPPrivilegedContainer
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            exemptImages:
+              description: "Lista image-a koji su izuzeti od ove politike"
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8spspprivilegedcontainer
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          container.securityContext.privileged
+          not exempt_image(container.image)
+          msg := sprintf("Privilegovani kontejner nije dozvoljen: %v", [container.name])
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.initContainers[_]
+          container.securityContext.privileged
+          not exempt_image(container.image)
+          msg := sprintf("Privilegovani init kontejner nije dozvoljen: %v", [container.name])
+        }
+
+        exempt_image(image) {
+          exempt_images := object.get(input.parameters, "exemptImages", [])
+          img := exempt_images[_]
+          startswith(image, img)
+        }

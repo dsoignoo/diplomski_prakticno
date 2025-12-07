@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-11-13T16:15:01+01:00",
+  "phase": "baseline",
+  "kubernetes_version": "",
+  "cluster_name": "gke_semaphoreci-deployment_us-east4_test-baseline",
+  "vulnerability_scanning": {
+    "total_images": 63,
+    "vulnerable_images": 0,
+    "vulnerability_rate": 0.00,
+    "critical_cves": 0,
+    "high_cves": 0,
+    "medium_cves": 0
+  },
+  "pod_security_standards": {
+    "total_pods": 85,
+    "pss_compliant_pods": 0,
+    "compliance_rate": 0.00,
+    "privileged_pods": 0,
+    "host_network_pods": 0,
+    "root_user_pods": 0
+  },
+  "network_policies": {
+    "total_policies": 0,
+    "namespaces_with_policies": 0,
+    "coverage_rate": 0.00,
+    "default_deny_policies": 0
+  },
+  "rbac_configuration": {
+    "total_service_accounts": 71,
+    "total_roles": 33,
+    "total_cluster_roles": 124,
+    "wildcard_permissions": 323,
+    "cluster_admin_bindings": 1
+  },
+  "secrets_management": {
+    "total_secrets": 21,
+    "external_secrets_count": 0
+0,
+    "external_secrets_operator": false,
+    "encryption_at_rest": false
+  },
+  "runtime_security": {
+    "falco_deployed": false,
+    "falco_rules_count": 0,
+    "falco_alerts_24h": 0
+  },
+  "observability": {
+    "prometheus": false,
+    "grafana": false,
+    "loki": false,
+    "jaeger": false
+  },
+  "attack_simulations": null
+}

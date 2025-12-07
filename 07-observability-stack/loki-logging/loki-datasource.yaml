@@ -1,0 +1,33 @@
+# Grafana datasource za Loki
+# Apply nakon instalacije Loki-ja
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasource-loki
+  namespace: monitoring
+  labels:
+    grafana_datasource: "1"
+data:
+  loki-datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+    - name: Loki
+      type: loki
+      access: proxy
+      url: http://loki:3100
+      jsonData:
+        maxLines: 1000
+        derivedFields:
+          # Link Loki logs sa Jaeger traces
+          - datasourceUid: jaeger
+            matcherRegex: "trace_id=(\\w+)"
+            name: TraceID
+            url: "$${__value.raw}"
+          # Link sa pod metrics u Prometheus
+          - datasourceUid: prometheus
+            matcherRegex: "pod=(\\w+)"
+            name: Pod
+            url: "/explore?left=[\"now-1h\",\"now\",\"prometheus\",{\"expr\":\"container_memory_working_set_bytes{pod=\\\"$${__value.raw}\\\"}\"}]"
+      editable: true
+      isDefault: false

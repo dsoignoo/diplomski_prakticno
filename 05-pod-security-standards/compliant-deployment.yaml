@@ -1,0 +1,105 @@
+# Deployment koji zadovoljava PSS restricted profile
+# Svi Semaphore servisi trebaju slijediti ovaj obrazac
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guard-api
+  namespace: semaphore
+  labels:
+    app: guard
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: guard
+      component: api
+  template:
+    metadata:
+      labels:
+        app: guard
+        component: api
+    spec:
+      # Pod-level security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      serviceAccountName: guard-sa
+      automountServiceAccountToken: false  # Eksplicitno onemogućeno osim ako je potrebno
+
+      containers:
+      - name: guard
+        image: ghcr.io/semaphoreio/guard:v2.5.0
+
+        # Container-level security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
+
+        ports:
+        - containerPort: 4000
+          name: http
+          protocol: TCP
+
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+        # Zdravstvene provjere
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 4000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+        # Volume mounts za writable direktorije
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/cache
+
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: LOG_LEVEL
+          value: "info"
+
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+
+      # Topologija za high availability
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: guard

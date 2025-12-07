@@ -1,0 +1,14 @@
+# Network Policy: Deny all ingress to Redis
+# Only explicitly allowed pods can connect to the cache
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-deny-ingress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  ingress: []  # Empty list = deny all ingress

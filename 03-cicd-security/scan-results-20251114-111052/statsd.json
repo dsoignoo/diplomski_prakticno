@@ -1,0 +1,496 @@
+{
+  "SchemaVersion": 2,
+  "CreatedAt": "2025-11-14T11:12:14.751600574+01:00",
+  "ArtifactName": "ghcr.io/semaphoreio/statsd:3facc2c7dd33174f5e50010d3d34820c5bb354b8",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "OS": {
+      "Family": "alpine",
+      "Name": "3.19.1",
+      "EOSL": true
+    },
+    "ImageID": "sha256:c06f0ec70be72086d6541fddc7e6ebceff58b834ec901cddfd4b10753cc38381",
+    "DiffIDs": [
+      "sha256:d4fc045c9e3a848011de66f34b81f052d4f2c15a17bb196d637e526349601820",
+      "sha256:29e213bad1306d6abdee251c746a2414e8ebc4fdfc1833dff64092ea83986dab",
+      "sha256:4a0d315ad53e387bb08fac3c2977ecd3a23ca5eaf023e12644d829d10bfb7789",
+      "sha256:b325b33b9813d78f92e63042f8344f39ea14836e8f3e58b693727d2f0205d747",
+      "sha256:60a63548bda49a30143ffad3b9f0bea6e1991d5c8e1029d22f569e3294ce323f",
+      "sha256:7427ee903d1960c113233dd087f963ddec6e16d72c986f6aaee3ed351eb3e961",
+      "sha256:b3d79209cffa52614d021d6dfffcbd7bfa18a7df6d0d7b4bef9eddfcb93e5ea1",
+      "sha256:83e8b6d6ac24609d4878474b4307ca7de906cca2942a4a9d85ba498e6b6f80c6",
+      "sha256:eda464c4c2bb1c0f1388a3c0a096c2f960caff4beb05d5682ea46ba2db821a23",
+      "sha256:6678a48835fd85f4ec374d43a5586373ebdaa4df8a0857eaca861934095a9c9a",
+      "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "sha256:4cf172203ecb95ac9b7fa71976a288b3f82e062dd35ff6778961ec70b891f26e",
+      "sha256:92853f40bd91bc30103474e1b65090a74c76296567415a1b0be418594cfee17a",
+      "sha256:dba9cf148a4f0bc5bbc97aa6f7c013bb86214fc250e432e6bb41f92067257b78"
+    ],
+    "RepoTags": [
+      "ghcr.io/semaphoreio/statsd:3facc2c7dd33174f5e50010d3d34820c5bb354b8"
+    ],
+    "RepoDigests": [
+      "ghcr.io/semaphoreio/statsd@sha256:34574b2cc66c73b3b96555ebdebee0bffbd7c8469b72b21963df883bc023ffc6"
+    ],
+    "ImageConfig": {
+      "architecture": "amd64",
+      "created": "2025-08-07T12:29:36.390448345Z",
+      "history": [
+        {
+          "created": "2024-01-27T00:30:48.624602109Z",
+          "created_by": "/bin/sh -c #(nop) ADD file:37a76ec18f9887751cd8473744917d08b7431fc4085097bb6a09d81b41775473 in / "
+        },
+        {
+          "created": "2024-01-27T00:30:48.743965523Z",
+          "created_by": "/bin/sh -c #(nop)  CMD [\"/bin/sh\"]",
+          "empty_layer": true
+        },
+        {
+          "created": "2024-01-27T03:14:26.674605331Z",
+          "created_by": "/bin/sh -c #(nop)  ENV NODE_VERSION=18.19.0",
+          "empty_layer": true
+        },
+        {
+          "created": "2024-01-27T03:14:34.687647917Z",
+          "created_by": "/bin/sh -c addgroup -g 1000 node     \u0026\u0026 adduser -u 1000 -G node -s /bin/sh -D node     \u0026\u0026 apk add --no-cache         libstdc++     \u0026\u0026 apk add --no-cache --virtual .build-deps         curl     \u0026\u0026 ARCH= OPENSSL_ARCH='linux*' \u0026\u0026 alpineArch=\"$(apk --print-arch)\"       \u0026\u0026 case \"${alpineArch##*-}\" in         x86_64) ARCH='x64' CHECKSUM=\"10b7b23b6b867a25f060a433b83f5c3ecb3bcf7cdba1c0ce46443065a832fd41\" OPENSSL_ARCH=linux-x86_64;;         x86) OPENSSL_ARCH=linux-elf;;         aarch64) OPENSSL_ARCH=linux-aarch64;;         arm*) OPENSSL_ARCH=linux-armv4;;         ppc64le) OPENSSL_ARCH=linux-ppc64le;;         s390x) OPENSSL_ARCH=linux-s390x;;         *) ;;       esac   \u0026\u0026 if [ -n \"${CHECKSUM}\" ]; then     set -eu;     curl -fsSLO --compressed \"https://unofficial-builds.nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz\";     echo \"$CHECKSUM  node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz\" | sha256sum -c -       \u0026\u0026 tar -xJf \"node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz\" -C /usr/local --strip-components=1 --no-same-owner       \u0026\u0026 ln -s /usr/local/bin/node /usr/local/bin/nodejs;   else     echo \"Building from source\"     \u0026\u0026 apk add --no-cache --virtual .build-deps-full         binutils-gold         g++         gcc         gnupg         libgcc         linux-headers         make         python3     \u0026\u0026 export GNUPGHOME=\"$(mktemp -d)\"     \u0026\u0026 for key in       4ED778F539E3634C779C87C6D7062848A1AB005C       141F07595B7B3FFE74309A937405533BE57C7D57       74F12602B6F1C4E913FAA37AD3A89613643B6201       DD792F5973C6DE52C432CBDAC77ABFA00DDBF2B7       61FC681DFB92A079F1685E77973F295594EC4689       8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600       C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8       890C08DB8579162FEE0DF9DB8BEAB4DFCF555EF4       C82FA3AE1CBEDC6BE46B9360C43CEC45C17AB93C       108F52B48DB57BB0CC439B2997B01419BD92F80A       A363A499291CBBC940DD62E41F10027AF002F8B0     ; do       gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys \"$key\" ||       gpg --batch --keyserver keyserver.ubuntu.com --recv-keys \"$key\" ;     done     \u0026\u0026 curl -fsSLO --compressed \"https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION.tar.xz\"     \u0026\u0026 curl -fsSLO --compressed \"https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc\"     \u0026\u0026 gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc     \u0026\u0026 gpgconf --kill all     \u0026\u0026 rm -rf \"$GNUPGHOME\"     \u0026\u0026 grep \" node-v$NODE_VERSION.tar.xz\\$\" SHASUMS256.txt | sha256sum -c -     \u0026\u0026 tar -xf \"node-v$NODE_VERSION.tar.xz\"     \u0026\u0026 cd \"node-v$NODE_VERSION\"     \u0026\u0026 ./configure     \u0026\u0026 make -j$(getconf _NPROCESSORS_ONLN) V=     \u0026\u0026 make install     \u0026\u0026 apk del .build-deps-full     \u0026\u0026 cd ..     \u0026\u0026 rm -Rf \"node-v$NODE_VERSION\"     \u0026\u0026 rm \"node-v$NODE_VERSION.tar.xz\" SHASUMS256.txt.asc SHASUMS256.txt;   fi   \u0026\u0026 rm -f \"node-v$NODE_VERSION-linux-$ARCH-musl.tar.xz\"   \u0026\u0026 find /usr/local/include/node/openssl/archs -mindepth 1 -maxdepth 1 ! -name \"$OPENSSL_ARCH\" -exec rm -rf {} \\;   \u0026\u0026 apk del .build-deps   \u0026\u0026 node --version   \u0026\u0026 npm --version"
+        },
+        {
+          "created": "2024-01-27T03:14:35.075691765Z",
+          "created_by": "/bin/sh -c #(nop)  ENV YARN_VERSION=1.22.19",
+          "empty_layer": true
+        },
+        {
+          "created": "2024-01-27T03:14:39.305378471Z",
+          "created_by": "/bin/sh -c apk add --no-cache --virtual .build-deps-yarn curl gnupg tar   \u0026\u0026 export GNUPGHOME=\"$(mktemp -d)\"   \u0026\u0026 for key in     6A010C5166006599AA17F08146C2130DFD2497F5   ; do     gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys \"$key\" ||     gpg --batch --keyserver keyserver.ubuntu.com --recv-keys \"$key\" ;   done   \u0026\u0026 curl -fsSLO --compressed \"https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz\"   \u0026\u0026 curl -fsSLO --compressed \"https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz.asc\"   \u0026\u0026 gpg --batch --verify yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz   \u0026\u0026 gpgconf --kill all   \u0026\u0026 rm -rf \"$GNUPGHOME\"   \u0026\u0026 mkdir -p /opt   \u0026\u0026 tar -xzf yarn-v$YARN_VERSION.tar.gz -C /opt/   \u0026\u0026 ln -s /opt/yarn-v$YARN_VERSION/bin/yarn /usr/local/bin/yarn   \u0026\u0026 ln -s /opt/yarn-v$YARN_VERSION/bin/yarnpkg /usr/local/bin/yarnpkg   \u0026\u0026 rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz   \u0026\u0026 apk del .build-deps-yarn   \u0026\u0026 yarn --version"
+        },
+        {
+          "created": "2024-01-27T03:14:39.420775998Z",
+          "created_by": "/bin/sh -c #(nop) COPY file:4d192565a7220e135cab6c77fbc1c73211b69f3d9fb37e62857b2c6eb9363d51 in /usr/local/bin/ "
+        },
+        {
+          "created": "2024-01-27T03:14:39.506265845Z",
+          "created_by": "/bin/sh -c #(nop)  ENTRYPOINT [\"docker-entrypoint.sh\"]",
+          "empty_layer": true
+        },
+        {
+          "created": "2024-01-27T03:14:39.588532668Z",
+          "created_by": "/bin/sh -c #(nop)  CMD [\"node\"]",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-08-07T12:29:30.532527138Z",
+          "created_by": "WORKDIR /app",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-08-07T12:29:30.54013013Z",
+          "created_by": "COPY Makefile . # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-08-07T12:29:30.548822713Z",
+          "created_by": "COPY localConfig.js . # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-08-07T12:29:30.563055797Z",
+          "created_by": "COPY package.json . # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-08-07T12:29:35.012162822Z",
+          "created_by": "RUN /bin/sh -c npm install # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-08-07T12:29:36.134580664Z",
+          "created_by": "LABEL org.opencontainers.image.source=https://github.com/semaphoreio/semaphore",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-08-07T12:29:36.134580664Z",
+          "created_by": "EXPOSE map[8125/tcp:{}]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-08-07T12:29:36.134580664Z",
+          "created_by": "HEALTHCHECK \u0026{[\"NONE\"] \"0s\" \"0s\" \"0s\" \"0s\" '\\x00'}",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-08-07T12:29:36.134580664Z",
+          "created_by": "RUN /bin/sh -c apk add --upgrade --no-cache \u0026\u0026   apk add --no-cache make netcat-openbsd tcpdump \u0026\u0026   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-08-07T12:29:36.142107146Z",
+          "created_by": "WORKDIR /app",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-08-07T12:29:36.316420085Z",
+          "created_by": "RUN /bin/sh -c chown nobody /app # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-08-07T12:29:36.316420085Z",
+          "created_by": "USER nobody",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-08-07T12:29:36.365738088Z",
+          "created_by": "COPY --chown=nobody:root /app/node_modules /app/node_modules # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-08-07T12:29:36.390448345Z",
+          "created_by": "COPY --chown=nobody:root /app/localConfig.js /app/localConfig.js # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-08-07T12:29:36.390448345Z",
+          "created_by": "CMD [\"/bin/sh\" \"-c\" \"./node_modules/.bin/statsd localConfig.js\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        }
+      ],
+      "os": "linux",
+      "rootfs": {
+        "type": "layers",
+        "diff_ids": [
+          "sha256:d4fc045c9e3a848011de66f34b81f052d4f2c15a17bb196d637e526349601820",
+          "sha256:29e213bad1306d6abdee251c746a2414e8ebc4fdfc1833dff64092ea83986dab",
+          "sha256:4a0d315ad53e387bb08fac3c2977ecd3a23ca5eaf023e12644d829d10bfb7789",
+          "sha256:b325b33b9813d78f92e63042f8344f39ea14836e8f3e58b693727d2f0205d747",
+          "sha256:60a63548bda49a30143ffad3b9f0bea6e1991d5c8e1029d22f569e3294ce323f",
+          "sha256:7427ee903d1960c113233dd087f963ddec6e16d72c986f6aaee3ed351eb3e961",
+          "sha256:b3d79209cffa52614d021d6dfffcbd7bfa18a7df6d0d7b4bef9eddfcb93e5ea1",
+          "sha256:83e8b6d6ac24609d4878474b4307ca7de906cca2942a4a9d85ba498e6b6f80c6",
+          "sha256:eda464c4c2bb1c0f1388a3c0a096c2f960caff4beb05d5682ea46ba2db821a23",
+          "sha256:6678a48835fd85f4ec374d43a5586373ebdaa4df8a0857eaca861934095a9c9a",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:4cf172203ecb95ac9b7fa71976a288b3f82e062dd35ff6778961ec70b891f26e",
+          "sha256:92853f40bd91bc30103474e1b65090a74c76296567415a1b0be418594cfee17a",
+          "sha256:dba9cf148a4f0bc5bbc97aa6f7c013bb86214fc250e432e6bb41f92067257b78"
+        ]
+      },
+      "config": {
+        "Cmd": [
+          "/bin/sh",
+          "-c",
+          "./node_modules/.bin/statsd localConfig.js"
+        ],
+        "Healthcheck": {
+          "Test": [
+            "NONE"
+          ]
+        },
+        "Entrypoint": [
+          "docker-entrypoint.sh"
+        ],
+        "Env": [
+          "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "NODE_VERSION=18.19.0",
+          "YARN_VERSION=1.22.19"
+        ],
+        "Labels": {
+          "org.opencontainers.image.source": "https://github.com/semaphoreio/semaphore"
+        },
+        "User": "nobody",
+        "WorkingDir": "/app",
+        "ExposedPorts": {
+          "8125/tcp": {}
+        },
+        "ArgsEscaped": true
+      }
+    }
+  },
+  "Results": [
+    {
+      "Target": "ghcr.io/semaphoreio/statsd:3facc2c7dd33174f5e50010d3d34820c5bb354b8 (alpine 3.19.1)",
+      "Class": "os-pkgs",
+      "Type": "alpine",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-6119",
+          "PkgID": "libcrypto3@3.1.4-r5",
+          "PkgName": "libcrypto3",
+          "PkgIdentifier": {
+            "PURL": "pkg:apk/alpine/libcrypto3@3.1.4-r5?arch=x86_64\u0026distro=3.19.1"
+          },
+          "InstalledVersion": "3.1.4-r5",
+          "FixedVersion": "3.1.7-r0",
+          "Status": "fixed",
+          "Layer": {
+            "Digest": "sha256:4abcf20661432fb2d719aaf90656f55c287f8ca915dc1c92ec14ff61e67fbaf8",
+            "DiffID": "sha256:d4fc045c9e3a848011de66f34b81f052d4f2c15a17bb196d637e526349601820"
+          },
+          "SeveritySource": "nvd",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-6119",
+          "DataSource": {
+            "ID": "alpine",
+            "Name": "Alpine Secdb",
+            "URL": "https://secdb.alpinelinux.org/"
+          },
+          "Title": "openssl: Possible denial of service in X.509 name checks",
+          "Description": "Issue summary: Applications performing certificate name checks (e.g., TLS\nclients checking server certificates) may attempt to read an invalid memory\naddress resulting in abnormal termination of the application process.\n\nImpact summary: Abnormal termination of an application can a cause a denial of\nservice.\n\nApplications performing certificate name checks (e.g., TLS clients checking\nserver certificates) may attempt to read an invalid memory address when\ncomparing the expected name with an `otherName` subject alternative name of an\nX.509 certificate. This may result in an exception that terminates the\napplication program.\n\nNote that basic certificate chain validation (signatures, dates, ...) is not\naffected, the denial of service can occur only when the application also\nspecifies an expected DNS name, Email address or IP address.\n\nTLS servers rarely solicit client certificates, and even when they do, they\ngenerally don't perform a name check against a reference identifier (expected\nidentity), but rather extract the presented identity after checking the\ncertificate chain.  So TLS servers are generally not affected and the severity\nof the issue is Moderate.\n\nThe FIPS modules in 3.3, 3.2, 3.1 and 3.0 are not affected by this issue.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-843"
+          ],
+          "VendorSeverity": {
+            "alma": 2,
+            "amazon": 2,
+            "azure": 3,
+            "cbl-mariner": 3,
+            "nvd": 3,
+            "oracle-oval": 2,
+            "photon": 3,
+            "redhat": 2,
+            "rocky": 2,
+            "ubuntu": 2
+          },
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 7.5
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 5.9
+            }
+          },
+          "References": [
+            "http://www.openwall.com/lists/oss-security/2024/09/03/4",
+            "https://access.redhat.com/errata/RHSA-2024:8935",
+            "https://access.redhat.com/security/cve/CVE-2024-6119",
+            "https://bugzilla.redhat.com/2306158",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2306158",
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-6119",
+            "https://errata.almalinux.org/9/ALSA-2024-8935.html",
+            "https://errata.rockylinux.org/RLSA-2024:6783",
+            "https://github.com/openssl/openssl/commit/05f360d9e849a1b277db628f1f13083a7f8dd04f",
+            "https://github.com/openssl/openssl/commit/06d1dc3fa96a2ba5a3e22735a033012aadc9f0d6",
+            "https://github.com/openssl/openssl/commit/621f3729831b05ee828a3203eddb621d014ff2b2",
+            "https://github.com/openssl/openssl/commit/7dfcee2cd2a63b2c64b9b4b0850be64cb695b0a0",
+            "https://github.com/openssl/openssl/security/advisories/GHSA-5qrj-vq78-58fj",
+            "https://linux.oracle.com/cve/CVE-2024-6119.html",
+            "https://linux.oracle.com/errata/ELSA-2024-8935.html",
+            "https://lists.freebsd.org/archives/freebsd-security/2024-September/000303.html",
+            "https://nvd.nist.gov/vuln/detail/CVE-2024-6119",
+            "https://openssl-library.org/news/secadv/20240903.txt",
+            "https://security.netapp.com/advisory/ntap-20240912-0001/",
+            "https://ubuntu.com/security/notices/USN-6986-1",
+            "https://www.cve.org/CVERecord?id=CVE-2024-6119"
+          ],
+          "PublishedDate": "2024-09-03T16:15:07.177Z",
+          "LastModifiedDate": "2025-06-03T10:51:54.117Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2024-6119",
+          "PkgID": "libssl3@3.1.4-r5",
+          "PkgName": "libssl3",
+          "PkgIdentifier": {
+            "PURL": "pkg:apk/alpine/libssl3@3.1.4-r5?arch=x86_64\u0026distro=3.19.1"
+          },
+          "InstalledVersion": "3.1.4-r5",
+          "FixedVersion": "3.1.7-r0",
+          "Status": "fixed",
+          "Layer": {
+            "Digest": "sha256:4abcf20661432fb2d719aaf90656f55c287f8ca915dc1c92ec14ff61e67fbaf8",
+            "DiffID": "sha256:d4fc045c9e3a848011de66f34b81f052d4f2c15a17bb196d637e526349601820"
+          },
+          "SeveritySource": "nvd",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-6119",
+          "DataSource": {
+            "ID": "alpine",
+            "Name": "Alpine Secdb",
+            "URL": "https://secdb.alpinelinux.org/"
+          },
+          "Title": "openssl: Possible denial of service in X.509 name checks",
+          "Description": "Issue summary: Applications performing certificate name checks (e.g., TLS\nclients checking server certificates) may attempt to read an invalid memory\naddress resulting in abnormal termination of the application process.\n\nImpact summary: Abnormal termination of an application can a cause a denial of\nservice.\n\nApplications performing certificate name checks (e.g., TLS clients checking\nserver certificates) may attempt to read an invalid memory address when\ncomparing the expected name with an `otherName` subject alternative name of an\nX.509 certificate. This may result in an exception that terminates the\napplication program.\n\nNote that basic certificate chain validation (signatures, dates, ...) is not\naffected, the denial of service can occur only when the application also\nspecifies an expected DNS name, Email address or IP address.\n\nTLS servers rarely solicit client certificates, and even when they do, they\ngenerally don't perform a name check against a reference identifier (expected\nidentity), but rather extract the presented identity after checking the\ncertificate chain.  So TLS servers are generally not affected and the severity\nof the issue is Moderate.\n\nThe FIPS modules in 3.3, 3.2, 3.1 and 3.0 are not affected by this issue.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-843"
+          ],
+          "VendorSeverity": {
+            "alma": 2,
+            "amazon": 2,
+            "azure": 3,
+            "cbl-mariner": 3,
+            "nvd": 3,
+            "oracle-oval": 2,
+            "photon": 3,
+            "redhat": 2,
+            "rocky": 2,
+            "ubuntu": 2
+          },
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 7.5
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 5.9
+            }
+          },
+          "References": [
+            "http://www.openwall.com/lists/oss-security/2024/09/03/4",
+            "https://access.redhat.com/errata/RHSA-2024:8935",
+            "https://access.redhat.com/security/cve/CVE-2024-6119",
+            "https://bugzilla.redhat.com/2306158",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2306158",
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-6119",
+            "https://errata.almalinux.org/9/ALSA-2024-8935.html",
+            "https://errata.rockylinux.org/RLSA-2024:6783",
+            "https://github.com/openssl/openssl/commit/05f360d9e849a1b277db628f1f13083a7f8dd04f",
+            "https://github.com/openssl/openssl/commit/06d1dc3fa96a2ba5a3e22735a033012aadc9f0d6",
+            "https://github.com/openssl/openssl/commit/621f3729831b05ee828a3203eddb621d014ff2b2",
+            "https://github.com/openssl/openssl/commit/7dfcee2cd2a63b2c64b9b4b0850be64cb695b0a0",
+            "https://github.com/openssl/openssl/security/advisories/GHSA-5qrj-vq78-58fj",
+            "https://linux.oracle.com/cve/CVE-2024-6119.html",
+            "https://linux.oracle.com/errata/ELSA-2024-8935.html",
+            "https://lists.freebsd.org/archives/freebsd-security/2024-September/000303.html",
+            "https://nvd.nist.gov/vuln/detail/CVE-2024-6119",
+            "https://openssl-library.org/news/secadv/20240903.txt",
+            "https://security.netapp.com/advisory/ntap-20240912-0001/",
+            "https://ubuntu.com/security/notices/USN-6986-1",
+            "https://www.cve.org/CVERecord?id=CVE-2024-6119"
+          ],
+          "PublishedDate": "2024-09-03T16:15:07.177Z",
+          "LastModifiedDate": "2025-06-03T10:51:54.117Z"
+        }
+      ]
+    },
+    {
+      "Target": "Node.js",
+      "Class": "lang-pkgs",
+      "Type": "node-pkg",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-21538",
+          "PkgID": "cross-spawn@7.0.3",
+          "PkgName": "cross-spawn",
+          "PkgPath": "usr/local/lib/node_modules/npm/node_modules/cross-spawn/package.json",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/cross-spawn@7.0.3"
+          },
+          "InstalledVersion": "7.0.3",
+          "FixedVersion": "7.0.5, 6.0.6",
+          "Status": "fixed",
+          "Layer": {
+            "Digest": "sha256:eb6c7c29ba4d368f2428cacd291f7821b750fac3b1fb65b937ef855c573cdf97",
+            "DiffID": "sha256:29e213bad1306d6abdee251c746a2414e8ebc4fdfc1833dff64092ea83986dab"
+          },
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-21538",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Title": "cross-spawn: regular expression denial of service",
+          "Description": "Versions of the package cross-spawn before 6.0.6, from 7.0.0 and before 7.0.5 are vulnerable to Regular Expression Denial of Service (ReDoS) due to improper input sanitization. An attacker can increase the CPU usage and crash the program by crafting a very large and well crafted string.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-1333"
+          ],
+          "VendorSeverity": {
+            "amazon": 2,
+            "azure": 3,
+            "cbl-mariner": 3,
+            "ghsa": 3,
+            "redhat": 1
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 7.5
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:R/S:U/C:N/I:N/A:H",
+              "V3Score": 4.4
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2024-21538",
+            "https://github.com/moxystudio/node-cross-spawn",
+            "https://github.com/moxystudio/node-cross-spawn/commit/5ff3a07d9add449021d806e45c4168203aa833ff",
+            "https://github.com/moxystudio/node-cross-spawn/commit/640d391fde65388548601d95abedccc12943374f",
+            "https://github.com/moxystudio/node-cross-spawn/commit/d35c865b877d2f9ded7c1ed87521c2fdb689c8dd",
+            "https://github.com/moxystudio/node-cross-spawn/issues/165",
+            "https://github.com/moxystudio/node-cross-spawn/pull/160",
+            "https://nvd.nist.gov/vuln/detail/CVE-2024-21538",
+            "https://security.snyk.io/vuln/SNYK-JAVA-ORGWEBJARSNPM-8366349",
+            "https://security.snyk.io/vuln/SNYK-JS-CROSSSPAWN-8303230",
+            "https://www.cve.org/CVERecord?id=CVE-2024-21538"
+          ],
+          "PublishedDate": "2024-11-08T05:15:06.453Z",
+          "LastModifiedDate": "2025-05-20T15:16:03.53Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2024-29415",
+          "PkgID": "ip@2.0.0",
+          "PkgName": "ip",
+          "PkgPath": "usr/local/lib/node_modules/npm/node_modules/ip/package.json",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/ip@2.0.0"
+          },
+          "InstalledVersion": "2.0.0",
+          "Status": "affected",
+          "Layer": {
+            "Digest": "sha256:eb6c7c29ba4d368f2428cacd291f7821b750fac3b1fb65b937ef855c573cdf97",
+            "DiffID": "sha256:29e213bad1306d6abdee251c746a2414e8ebc4fdfc1833dff64092ea83986dab"
+          },
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-29415",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Title": "node-ip: Incomplete fix for CVE-2023-42282",
+          "Description": "The ip package through 2.0.1 for Node.js might allow SSRF because some IP addresses (such as 127.1, 01200034567, 012.1.2.3, 000:0:0000::01, and ::fFFf:127.0.0.1) are improperly categorized as globally routable via isPublic. NOTE: this issue exists because of an incomplete fix for CVE-2023-42282.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-918",
+            "CWE-941"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 8.1
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2024-29415",
+            "https://cosmosofcyberspace.github.io/npm_ip_cve/npm_ip_cve.html",
+            "https://github.com/indutny/node-ip",
+            "https://github.com/indutny/node-ip/issues/150",
+            "https://github.com/indutny/node-ip/pull/143",
+            "https://github.com/indutny/node-ip/pull/144",
+            "https://nvd.nist.gov/vuln/detail/CVE-2024-29415",
+            "https://security.netapp.com/advisory/ntap-20250117-0010",
+            "https://security.netapp.com/advisory/ntap-20250117-0010/",
+            "https://www.cve.org/CVERecord?id=CVE-2024-29415"
+          ],
+          "PublishedDate": "2024-05-27T20:15:08.97Z",
+          "LastModifiedDate": "2025-01-17T20:15:27.95Z"
+        }
+      ]
+    }
+  ]
+}

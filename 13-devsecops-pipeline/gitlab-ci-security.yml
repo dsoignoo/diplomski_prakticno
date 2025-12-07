@@ -1,0 +1,99 @@
+# GitLab CI Security Pipeline
+stages:
+  - secret-detection
+  - sast
+  - build
+  - container-scan
+  - sbom
+  - sign
+  - deploy
+
+variables:
+  DOCKER_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  TRIVY_VERSION: "0.50.1"
+
+# Secret Detection
+secret_detection:
+  stage: secret-detection
+  image: zricethezav/gitleaks:latest
+  script:
+    - gitleaks detect --source . --verbose --exit-code 1
+  allow_failure: false
+
+# SAST Analysis
+semgrep:
+  stage: sast
+  image: semgrep/semgrep:latest
+  script:
+    - semgrep scan --config=auto --config=p/security-audit --sarif --output=semgrep.sarif .
+  artifacts:
+    reports:
+      sast: semgrep.sarif
+    paths:
+      - semgrep.sarif
+
+# Build Docker Image
+build:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $DOCKER_IMAGE .
+    - docker push $DOCKER_IMAGE
+
+# Trivy Container Scan
+container_scan:
+  stage: container-scan
+  image: aquasec/trivy:latest
+  script:
+    - trivy image --severity CRITICAL,HIGH --exit-code 1 --format json --output trivy-report.json $DOCKER_IMAGE
+  artifacts:
+    paths:
+      - trivy-report.json
+    reports:
+      container_scanning: trivy-report.json
+  allow_failure: false
+
+# IaC Scan
+iac_scan:
+  stage: container-scan
+  image: aquasec/trivy:latest
+  script:
+    - trivy config --severity CRITICAL,HIGH --exit-code 1 ./k8s/
+  allow_failure: false
+
+# SBOM Generation
+sbom:
+  stage: sbom
+  image: anchore/syft:latest
+  script:
+    - syft $DOCKER_IMAGE --output cyclonedx-json=sbom.json
+  artifacts:
+    paths:
+      - sbom.json
+
+# Image Signing
+sign:
+  stage: sign
+  image: gcr.io/projectsigstore/cosign:latest
+  only:
+    - main
+  script:
+    - cosign sign --yes $DOCKER_IMAGE
+    - cosign attach sbom --sbom sbom.json $DOCKER_IMAGE
+    - cosign sign --yes --attachment sbom $DOCKER_IMAGE
+
+# Deploy to Production
+deploy:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  only:
+    - main
+  script:
+    - kubectl set image deployment/app app=$DOCKER_IMAGE -n production
+    - kubectl rollout status deployment/app -n production --timeout=300s
+  environment:
+    name: production

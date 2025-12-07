@@ -1,0 +1,278 @@
+# NetworkPolicies za data layer komponente
+# Redis, RabbitMQ, MinIO
+
+---
+# Redis NetworkPolicy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-networkpolicy
+  namespace: semaphore
+  labels:
+    app.kubernetes.io/name: semaphore
+    app.kubernetes.io/component: redis
+    security.semaphore.io/policy: component-specific
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+
+  policyTypes:
+  - Ingress
+  - Egress
+
+  ingress:
+  # Allow from Guard (session storage)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: guard
+    ports:
+    - protocol: TCP
+      port: 6379
+
+  # Allow from Front (caching)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: front
+    ports:
+    - protocol: TCP
+      port: 6379
+
+  # Allow from Hooks Processor (deduplication)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: hooks-processor
+    ports:
+    - protocol: TCP
+      port: 6379
+
+  # Allow from Plumber (workflow state)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: plumber
+    ports:
+    - protocol: TCP
+      port: 6379
+
+  # Allow from other Redis pods (replication)
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+
+  egress:
+  # DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+  # Allow to other Redis pods (replication)
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+
+---
+# RabbitMQ NetworkPolicy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rabbitmq-networkpolicy
+  namespace: semaphore
+  labels:
+    app.kubernetes.io/name: semaphore
+    app.kubernetes.io/component: rabbitmq
+    security.semaphore.io/policy: component-specific
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+
+  policyTypes:
+  - Ingress
+  - Egress
+
+  ingress:
+  # Allow from Hooks Processor (publish jobs)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: hooks-processor
+    ports:
+    - protocol: TCP
+      port: 5672
+
+  # Allow from Plumber (workflow orchestration)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: plumber
+    ports:
+    - protocol: TCP
+      port: 5672
+
+  # Allow from Workflow workers (consume jobs)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: workflow-worker
+    ports:
+    - protocol: TCP
+      port: 5672
+
+  # Allow from periodic scheduler (scheduled jobs)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: periodic-scheduler
+    ports:
+    - protocol: TCP
+      port: 5672
+
+  # Allow from other RabbitMQ pods (clustering)
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: rabbitmq
+    ports:
+    - protocol: TCP
+      port: 5672
+    - protocol: TCP
+      port: 25672  # Erlang distribution port
+    - protocol: TCP
+      port: 4369   # EPMD port
+
+  # Management UI (optional, za debugging)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: front
+    ports:
+    - protocol: TCP
+      port: 15672  # Management UI
+
+  egress:
+  # DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+  # Allow to other RabbitMQ pods (clustering)
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: rabbitmq
+    ports:
+    - protocol: TCP
+      port: 5672
+    - protocol: TCP
+      port: 25672
+    - protocol: TCP
+      port: 4369
+
+---
+# MinIO NetworkPolicy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: minio-networkpolicy
+  namespace: semaphore
+  labels:
+    app.kubernetes.io/name: semaphore
+    app.kubernetes.io/component: minio
+    security.semaphore.io/policy: component-specific
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: minio
+
+  policyTypes:
+  - Ingress
+  - Egress
+
+  ingress:
+  # Allow from ArtifactHub (upload/download artifacts)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: artifacthub
+    ports:
+    - protocol: TCP
+      port: 9000
+
+  # Allow from Front (browser uploads)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: front
+    ports:
+    - protocol: TCP
+      port: 9000
+
+  # Allow from workflow jobs (artifact storage)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: job-runner
+    ports:
+    - protocol: TCP
+      port: 9000
+
+  # Allow from API Gateway
+  - from:
+    - podSelector:
+        matchLabels:
+          app: public-api-gateway
+    ports:
+    - protocol: TCP
+      port: 9000
+
+  # MinIO Console (management UI)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: front
+    ports:
+    - protocol: TCP
+      port: 9001
+
+  egress:
+  # DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+  # Allow to GCS for backup/replication (optional)
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443

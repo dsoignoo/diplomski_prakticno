@@ -1,0 +1,14 @@
+2025-11-14T11:11:51.734+0100	[34mINFO[0m	Vulnerability scanning is enabled
+2025-11-14T11:11:51.734+0100	[34mINFO[0m	Secret scanning is enabled
+2025-11-14T11:11:51.735+0100	[34mINFO[0m	If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2025-11-14T11:11:51.735+0100	[34mINFO[0m	Please see also https://aquasecurity.github.io/trivy/v0.50/docs/scanner/secret/#recommendation for faster secret detection
+2025-11-14T11:11:52.563+0100	[34mINFO[0m	Detected OS: alpine
+2025-11-14T11:11:52.563+0100	[34mINFO[0m	Detecting Alpine vulnerabilities...
+2025-11-14T11:11:52.566+0100	[34mINFO[0m	Number of language-specific files: 0
+2025-11-14T11:11:52.566+0100	[33mWARN[0m	This OS version is no longer supported by the distribution: alpine 3.19.7
+2025-11-14T11:11:52.566+0100	[33mWARN[0m	The vulnerability detection may be insufficient because security updates are not provided
+
+ghcr.io/semaphoreio/front:c4bdd9c00662df0ccc0f0a5731d81e39b96ea844 (alpine 3.19.7)
+==================================================================================
+Total: 0 (HIGH: 0, CRITICAL: 0)
+

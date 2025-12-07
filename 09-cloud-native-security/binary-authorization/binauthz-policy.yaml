@@ -1,0 +1,154 @@
+# Binary Authorization Policy
+# Enforces da samo signed i verified image-i mogu biti deployani
+
+# Policy se kreira putem gcloud, ovaj fajl je dokumentacija
+
+---
+# 1. Default Admission Rule - REQUIRE ATTESTATION
+# Svi image-i moraju biti potpisani sa našim Cosign key-em
+
+defaultAdmissionRule:
+  evaluationMode: REQUIRE_ATTESTATION
+  enforcementMode: ENFORCED_BLOCK_AND_AUDIT_LOG
+  requireAttestationsBy:
+    - projects/YOUR_PROJECT_ID/attestors/semaphore-attestor
+
+---
+# 2. Cluster-specific rules (ako imamo multiple clusters)
+
+clusterAdmissionRules:
+  us-central1.semaphore-autopilot:
+    evaluationMode: REQUIRE_ATTESTATION
+    enforcementMode: ENFORCED_BLOCK_AND_AUDIT_LOG
+    requireAttestationsBy:
+      - projects/YOUR_PROJECT_ID/attestors/semaphore-attestor
+
+---
+# 3. Exemptions za system namespaces (kube-system, gke-system)
+
+globalPolicyEvaluationMode: ENABLE
+
+admissionWhitelistPatterns:
+  - namePattern: "gcr.io/gke-release/*"
+  - namePattern: "gcr.io/config-management-release/*"
+  - namePattern: "gke.gcr.io/*"
+  - namePattern: "k8s.gcr.io/*"
+  - namePattern: "registry.k8s.io/*"
+
+---
+# CLI komande za setup
+
+# 1. Enable Binary Authorization API
+# gcloud services enable binaryauthorization.googleapis.com
+
+# 2. Create Container Analysis Note (za attestations)
+# cat > /tmp/note.json <<EOF
+# {
+#   "name": "projects/YOUR_PROJECT_ID/notes/semaphore-note",
+#   "attestation": {
+#     "hint": {
+#       "human_readable_name": "Semaphore Image Attestation"
+#     }
+#   }
+# }
+# EOF
+#
+# curl -X POST \
+#   -H "Content-Type: application/json" \
+#   -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+#   --data-binary @/tmp/note.json \
+#   "https://containeranalysis.googleapis.com/v1/projects/YOUR_PROJECT_ID/notes?noteId=semaphore-note"
+
+# 3. Create Attestor
+# gcloud container binauthz attestors create semaphore-attestor \
+#   --project=YOUR_PROJECT_ID \
+#   --attestation-authority-note=semaphore-note \
+#   --attestation-authority-note-project=YOUR_PROJECT_ID
+
+# 4. Generate Cosign key pair (ako već nije generisan)
+# cosign generate-key-pair
+
+# 5. Add public key to attestor
+# gcloud container binauthz attestors public-keys add \
+#   --attestor=semaphore-attestor \
+#   --project=YOUR_PROJECT_ID \
+#   --pgp-public-key-file=cosign.pub
+
+# 6. Import policy
+# gcloud container binauthz policy import /path/to/this/policy.yaml
+
+# 7. Enable na GKE cluster-u
+# gcloud container clusters update semaphore-autopilot \
+#   --region=us-central1 \
+#   --binauthz-evaluation-mode=PROJECT_SINGLETON_POLICY_ENFORCE
+
+---
+# Signing i Attestation workflow (iz CI/CD)
+
+# 1. Build image
+# docker build -t gcr.io/YOUR_PROJECT_ID/guard:v1.0.0 .
+
+# 2. Push to registry
+# docker push gcr.io/YOUR_PROJECT_ID/guard:v1.0.0
+
+# 3. Sign sa Cosign (keyless ili sa key)
+# cosign sign --key cosign.key gcr.io/YOUR_PROJECT_ID/guard:v1.0.0
+
+# 4. Create attestation
+# gcloud container binauthz attestations sign-and-create \
+#   --artifact-url=gcr.io/YOUR_PROJECT_ID/guard:v1.0.0 \
+#   --attestor=semaphore-attestor \
+#   --attestor-project=YOUR_PROJECT_ID \
+#   --keyversion-project=YOUR_PROJECT_ID \
+#   --keyversion-location=global \
+#   --keyversion-keyring=binauthz \
+#   --keyversion-key=attestor-key \
+#   --keyversion=1
+
+# 5. Deploy - sada će Binary Authorization provjeriti signature
+# kubectl apply -f deployment.yaml
+
+---
+# Monitoring Binary Authorization
+
+# View policy evaluations
+# gcloud logging read "resource.type=k8s_cluster AND \
+#   protoPayload.methodName=\"io.k8s.core.v1.pods.create\" AND \
+#   protoPayload.metadata.authorization.decision=\"deny\"" \
+#   --limit=10 \
+#   --format=json
+
+# Export metrics to Prometheus
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: binauthz-exporter
+  namespace: monitoring
+data:
+  config.yaml: |
+    # Binary Authorization Prometheus exporter config
+    metrics:
+      - name: binauthz_policy_evaluation_total
+        help: Total number of policy evaluations
+        type: counter
+        labels:
+          - result  # allow, deny
+          - reason  # attestation_missing, signature_invalid, etc.
+
+      - name: binauthz_attestation_verification_duration_seconds
+        help: Time to verify attestation
+        type: histogram
+        buckets: [0.1, 0.5, 1.0, 2.0, 5.0]
+
+---
+# DryRun mode za testiranje (opciono)
+
+# Test policy bez enforcementa
+# gcloud container binauthz policy import /path/to/policy.yaml --dry-run
+
+# Ili promijeni enforcement mode u DRYRUN_AUDIT_LOG_ONLY
+# defaultAdmissionRule:
+#   evaluationMode: REQUIRE_ATTESTATION
+#   enforcementMode: DRYRUN_AUDIT_LOG_ONLY
+#   requireAttestationsBy:
+#     - projects/YOUR_PROJECT_ID/attestors/semaphore-attestor

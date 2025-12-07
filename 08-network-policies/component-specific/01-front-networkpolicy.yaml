@@ -1,0 +1,76 @@
+# NetworkPolicy za Front (Web UI) servis
+# Front je user-facing web aplikacija koja komunicira sa Guard servisom za autentikaciju
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: front-networkpolicy
+  namespace: semaphore
+  labels:
+    app.kubernetes.io/name: semaphore
+    app.kubernetes.io/component: front
+    security.semaphore.io/policy: component-specific
+spec:
+  podSelector:
+    matchLabels:
+      app: front
+      component: web
+
+  policyTypes:
+  - Ingress
+  - Egress
+
+  ingress:
+  # Allow traffic from Ingress controller
+  - from:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 8080
+
+  # Allow traffic from other Front pods (for session sharing, internal LB)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: front
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 8080
+
+  egress:
+  # Allow to Guard API (authentication, authorization)
+  - to:
+    - podSelector:
+        matchLabels:
+          app: guard
+          component: api
+    ports:
+    - protocol: TCP
+      port: 4000
+
+  # Allow to Redis (session storage, caching)
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+
+  # DNS resolution (covered by allow-dns-all.yaml, but explicit here)
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

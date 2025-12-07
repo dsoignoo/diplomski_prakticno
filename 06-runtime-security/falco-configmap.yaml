@@ -1,0 +1,63 @@
+# Falco ConfigMap - Osnovna konfiguracija Falco runtime security
+# Ovaj ConfigMap sadrži glavnu Falco konfiguraciju
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-config
+  namespace: falco
+  labels:
+    app.kubernetes.io/name: falco
+    app.kubernetes.io/component: config
+data:
+  falco.yaml: |
+    # JSON output za lakšu integraciju sa SIEM sistemima
+    json_output: true
+    json_include_output_property: true
+
+    # Logging konfiguracija
+    log_stderr: true
+    log_syslog: false
+    log_level: info
+
+    # Minimum prioritet za evente
+    priority: notice
+
+    # Rules fajlovi za učitavanje
+    rules_file:
+      - /etc/falco/falco_rules.yaml
+      - /etc/falco/falco_rules.local.yaml
+      - /etc/falco/k8s_audit_rules.yaml
+      - /etc/falco/rules.d
+
+    # HTTP output za Falcosidekick
+    http_output:
+      enabled: true
+      url: "http://falcosidekick:2801"
+
+    # gRPC server za streaming evenata
+    grpc:
+      enabled: true
+      bind_address: "0.0.0.0:5060"
+      threadiness: 8
+
+    grpc_output:
+      enabled: true
+
+    # File output za lokalno čuvanje
+    file_output:
+      enabled: true
+      keep_alive: false
+      filename: /var/log/falco/events.log
+
+    # Stdout output
+    stdout_output:
+      enabled: true
+
+    # Syscall buffer konfiguracija
+    syscall_buf_size_preset: 4
+
+    # Metadata enrichment
+    metadata_download:
+      max_mb: 100
+      chunk_wait_us: 1000
+      watch_freq_sec: 1

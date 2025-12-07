@@ -1,0 +1,190 @@
+=== Service Accounts ===
+NAMESPACE                     NAME                                          SECRETS   AGE
+default                       ambassador                                    0         7m57s
+default                       default                                       0         93m
+default                       keycloak-setup-sa                             0         7m57s
+default                       semaphore-controller                          0         7m57s
+default                       semaphore-controller-agent                    0         7m57s
+emissary-system               default                                       0         48m
+emissary-system               emissary-apiext                               0         48m
+gke-managed-filestorecsi      default                                       0         91m
+gke-managed-system            default                                       0         91m
+gke-managed-volumepopulator   default                                       0         91m
+gmp-public                    default                                       0         91m
+gmp-system                    collector                                     0         91m
+gmp-system                    default                                       0         91m
+gmp-system                    operator                                      0         91m
+kube-node-lease               default                                       0         93m
+kube-public                   default                                       0         93m
+kube-system                   antrea-agent                                  0         90m
+kube-system                   antrea-controller                             0         90m
+kube-system                   antrea-cpha                                   0         90m
+kube-system                   attachdetach-controller                       0         93m
+kube-system                   certificate-controller                        0         93m
+kube-system                   cilium                                        0         92m
+kube-system                   cilium-win                                    0         90m
+kube-system                   cloud-provider                                0         92m
+kube-system                   clusterrole-aggregation-controller            0         93m
+kube-system                   cronjob-controller                            0         93m
+kube-system                   daemon-set-controller                         0         93m
+kube-system                   default                                       0         93m
+kube-system                   deployment-controller                         0         93m
+kube-system                   disruption-controller                         0         93m
+kube-system                   efficiency-daemon                             0         92m
+kube-system                   endpoint-controller                           0         93m
+kube-system                   endpointslice-controller                      0         93m
+kube-system                   endpointslicemirroring-controller             0         93m
+kube-system                   ephemeral-volume-controller                   0         93m
+kube-system                   event-exporter-sa                             0         92m
+kube-system                   expand-controller                             0         93m
+kube-system                   filestore-lockrelease-controller-sa           0         91m
+kube-system                   filestorecsi-node-sa                          0         92m
+kube-system                   fluentbit-gke                                 0         91m
+kube-system                   gcsfusecsi-node-sa                            0         91m
+kube-system                   generic-garbage-collector                     0         93m
+kube-system                   gke-metadata-server                           0         91m
+kube-system                   gke-metrics-agent                             0         91m
+kube-system                   gke-spiffe-node-agent                         0         91m
+kube-system                   gke-system-balloon-pod                        0         92m
+kube-system                   gpu-device-plugin-sa                          0         91m
+kube-system                   job-controller                                0         93m
+kube-system                   konnectivity-agent                            0         91m
+kube-system                   konnectivity-agent-cpha                       0         91m
+kube-system                   kube-dns                                      0         92m
+kube-system                   kube-dns-autoscaler                           0         91m
+kube-system                   kube-proxy                                    0         90m
+kube-system                   legacy-service-account-token-cleaner          0         93m
+kube-system                   maintenance-handler                           0         91m
+kube-system                   metadata-proxy                                0         90m
+kube-system                   metrics-server                                0         90m
+kube-system                   namespace-controller                          0         93m
+kube-system                   netd                                          0         90m
+kube-system                   node-controller                               0         93m
+kube-system                   pdcsi-node-sa                                 0         90m
+kube-system                   persistent-volume-binder                      0         93m
+kube-system                   pod-garbage-collector                         0         93m
+kube-system                   pv-protection-controller                      0         93m
+kube-system                   pvc-protection-controller                     0         93m
+kube-system                   replicaset-controller                         0         93m
+kube-system                   replication-controller                        0         93m
+kube-system                   resourcequota-controller                      0         93m
+kube-system                   root-ca-cert-publisher                        0         93m
+kube-system                   service-account-controller                    0         93m
+kube-system                   service-cidrs-controller                      0         93m
+kube-system                   service-controller                            0         92m
+kube-system                   statefulset-controller                        0         93m
+kube-system                   tpu-device-plugin-sa                          0         90m
+kube-system                   ttl-after-finished-controller                 0         93m
+kube-system                   ttl-controller                                0         93m
+kube-system                   validatingadmissionpolicy-status-controller   0         93m
+
+=== Network Policies (should show if any exist) ===
+No resources found
+
+=== Pod Security ===
+default/ambassador-597f68f8b9-7k2n4: {"runAsUser":8888}
+default/artifacthub-bucketcleaner-scheduler-7569f5ff55-d9pfj: {}
+default/artifacthub-bucketcleaner-worker-7dc4456df6-cjttj: {}
+default/artifacthub-internal-grpc-api-65dd6888d-gn69j: {}
+default/artifacthub-public-grpc-api-7464f584bf-bpzdq: {}
+default/auth-5fbb99fdbc-9nngs: {}
+default/badges-7f5468889c-4484g: {}
+default/branch-hub-7df4fb9fb8-sjwh5: {}
+default/dashboardhub-v1alpha-public-grpc-api-b8958b9d9-sxgp9: {}
+default/github-hooks-758f86b5d-8vjbm: {}
+default/github-hooks-repo-proxy-api-78b8c65b7-x696c: {}
+default/github-hooks-sidekiq-694c669788-cskhp: {}
+default/github-hooks-sidekiq-web-64674d594-w4jmx: {}
+default/github-notifier-api-956569597-jkg6n: {}
+default/github-notifier-consumer-6d997d4c95-sfzp4: {}
+default/guard-api-779948c656-n97dq: {}
+default/guard-authentication-api-7749754cf7-gsf6z: {}
+default/guard-consumers-699568676d-pcfpg: {}
+default/guard-id-http-api-7d895b9747-2f899: {}
+default/guard-instance-config-6bc7fdd9df-z8vl4: {}
+default/guard-organization-api-8587b4574d-qnlhw: {}
+default/guard-user-api-f665cc8c7-wxjgz: {}
+default/hooks-processor-api-6fcc94777-5shxg: {}
+default/hooks-processor-bitbucket-764d4856db-55wj5: {}
+default/hooks-processor-git-64f5ddf588-98xpc: {}
+default/hooks-processor-gitlab-5557679984-7wfct: {}
+default/hooks-receiver-5669c9c887-9x5w4: {}
+default/job-page-87955bdc7-6s2fm: {}
+default/keycloak-0: {}
+default/loghub2-archivator-779d56d694-89vmc: {}
+default/loghub2-internal-api-5cf6b67fc4-fsfj7: {}
+default/loghub2-public-api-845cf79db8-5vxzc: {}
+default/minio-artifacts-0: {}
+default/minio-cache-0: {}
+default/minio-logs-0: {}
+default/notifications-7dfdd8d588-h6qqc: {}
+default/periodic-scheduler-6bd757c769-hkz9r: {}
+default/plumber-7cc9c6559-kgpfz: {}
+default/plumber-public-67465c894b-rc8hr: {}
+default/postgres-0: {}
+default/project-page-7c8dfcc6f7-nntsl: {}
+default/projecthub-public-b6b88f444-7hkg6: {}
+default/projecthub-standalone-grpc-7f4cc9b467-bqnp4: {}
+default/projecthub-workers-844df5cd8b-tzsh4: {}
+default/public-api-758f65fff4-6kb9v: {}
+default/public-api-gateway-9d9c5bcd-mkcg9: {}
+default/rabbitmq-0: {}
+default/rbac-api-78f8d4f846-mn6lb: {}
+default/redis-0: {}
+default/repohub-0: {}
+default/repository-hub-5c7667d8bc-n6tf4: {}
+default/scouter-api-7cb55986df-rqdch: {}
+default/secrethub-7bf59b4dcd-9nzrk: {}
+default/self-hosted-hub-agent-cleaner-6f66dd6f85-mp9nn: {}
+default/self-hosted-hub-internal-api-5479bd646b-dqs76: {}
+default/self-hosted-hub-public-api-fd94856d-6x8wc: {}
+default/semaphore-controller-fbcb5fcd6-7z5cg: {}
+default/ui-cache-reactor-6cd868f88-wc7gx: {}
+default/zebra-db-worker-78ddfbb88-qj9zz: {}
+default/zebra-internal-api-8846fcb7d-h4fzv: {}
+default/zebra-message-worker-7b44465b84-ljzm6: {}
+default/zebra-public-api-645c6ddf95-jmbb2: {}
+default/zebra-self-hosted-dispatcher-595c95cc5-kx6x8: {}
+emissary-system/emissary-apiext-6b58b7f45f-92rwb: {}
+emissary-system/emissary-apiext-6b58b7f45f-lbxx5: {}
+emissary-system/emissary-apiext-6b58b7f45f-wd5pt: {}
+gmp-system/collector-7clp5: {"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+gmp-system/collector-p6259: {"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+gmp-system/collector-xxmcp: {"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+gmp-system/gmp-operator-78777ddd7c-m5jt7: {"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/anetd-4t84w: {}
+kube-system/anetd-pwf4k: {}
+kube-system/anetd-q8sgx: {}
+kube-system/antrea-controller-horizontal-autoscaler-7c9f9c4c7-smcwp: {"fsGroup":65534,"runAsGroup":1000,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"},"supplementalGroups":[65534]}
+kube-system/event-exporter-gke-787f6c698d-ls94w: {"runAsGroup":1000,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/filestore-lock-release-controller-5884c894bb-9pzh5: {}
+kube-system/filestore-node-4pzhc: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/filestore-node-9gvhc: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/filestore-node-n8rzl: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/fluentbit-gke-2nnfq: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/fluentbit-gke-dfthl: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/fluentbit-gke-m5x5c: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/gcsfusecsi-node-7bnrm: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/gcsfusecsi-node-8ss4z: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/gcsfusecsi-node-nm7h2: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/gke-metadata-server-bblck: {}
+kube-system/gke-metadata-server-btkt6: {}
+kube-system/gke-metadata-server-gvwmn: {}
+kube-system/gke-metrics-agent-9tvxl: {"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/gke-metrics-agent-x9wfp: {"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/gke-metrics-agent-xlb7d: {"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/konnectivity-agent-64dcd8d778-4hq2t: {"fsGroup":1000,"runAsGroup":1000,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/konnectivity-agent-64dcd8d778-v8pbp: {"fsGroup":1000,"runAsGroup":1000,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/konnectivity-agent-64dcd8d778-w252x: {"fsGroup":1000,"runAsGroup":1000,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/konnectivity-agent-autoscaler-6d9956645f-ghsnk: {"runAsGroup":1000,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/kube-dns-7d84ddb994-th55t: {"fsGroup":65534,"seccompProfile":{"type":"RuntimeDefault"},"supplementalGroups":[65534]}
+kube-system/kube-dns-7d84ddb994-zfgt9: {"fsGroup":65534,"seccompProfile":{"type":"RuntimeDefault"},"supplementalGroups":[65534]}
+kube-system/kube-dns-autoscaler-5bf7f79bb4-sk72z: {"fsGroup":65534,"runAsGroup":1000,"runAsUser":1000,"seccompProfile":{"type":"RuntimeDefault"},"supplementalGroups":[65534]}
+kube-system/l7-default-backend-78858cccc9-6fg5k: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/metrics-server-v1.33.0-6b8795c6f6-2qbbh: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/netd-589w6: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/netd-rv24g: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/netd-v4wv6: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/pdcsi-node-ffslv: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/pdcsi-node-hb5jw: {"seccompProfile":{"type":"RuntimeDefault"}}
+kube-system/pdcsi-node-q8lrk: {"seccompProfile":{"type":"RuntimeDefault"}}

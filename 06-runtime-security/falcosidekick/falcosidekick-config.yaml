@@ -1,0 +1,160 @@
+# Falcosidekick konfiguracija za SIEM integraciju
+# Proslijeđivanje Falco alertsa na Elasticsearch, Slack i Prometheus
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falcosidekick-config
+  namespace: falco
+  labels:
+    app.kubernetes.io/name: falcosidekick
+    app.kubernetes.io/component: config
+data:
+  config.yaml: |
+    # Elasticsearch integracija za SIEM
+    elasticsearch:
+      hostport: "elasticsearch.logging.svc.cluster.local:9200"
+      index: "falco"
+      type: "_doc"
+      minimumpriority: "warning"
+      mutualtls: false
+      checkcert: false
+      username: "elastic"
+      password: "${ELASTICSEARCH_PASSWORD}"
+      customHeaders:
+        X-Detection-Source: "falco-runtime"
+        X-Environment: "production"
+
+    # Slack notifikacije za kritične alerte
+    slack:
+      webhookurl: "${SLACK_WEBHOOK_URL}"
+      minimumpriority: "critical"
+      outputformat: "all"
+      footer: "Falco Runtime Security"
+      icon: ":shield:"
+      username: "Falco Alert"
+      messageformat: |
+        :rotating_light: *Falco Security Alert*
+
+        *Rule:* {{ .Rule }}
+        *Priority:* {{ .Priority }}
+        *Time:* {{ .Time }}
+
+        *Kubernetes Info:*
+        - Pod: {{ .OutputFields.k8s_pod_name }}
+        - Namespace: {{ .OutputFields.k8s_ns_name }}
+        - Deployment: {{ .OutputFields.k8s_deployment_name }}
+        - Container: {{ .OutputFields.container_name }}
+
+        *Event Details:*
+        {{ .Output }}
+
+        *Process:* {{ .OutputFields.proc_name }} ({{ .OutputFields.proc_cmdline }})
+        *User:* {{ .OutputFields.user_name }} (UID: {{ .OutputFields.user_uid }})
+
+    # Prometheus metrics exporter
+    prometheus:
+      extralabels: "environment:production,cluster:semaphore"
+
+    # Loki za log agregaciju
+    loki:
+      hostport: "http://loki.logging.svc.cluster.local:3100"
+      minimumpriority: "notice"
+      tenant: ""
+      endpoint: "/loki/api/v1/push"
+      extralabels: "source:falco"
+      checkcert: false
+
+    # PagerDuty integracija (opciono)
+    pagerduty:
+      routingkey: "${PAGERDUTY_ROUTING_KEY}"
+      minimumpriority: "critical"
+
+    # Webhook za custom integracije
+    webhook:
+      address: "http://security-webhook.security.svc.cluster.local:8080/falco"
+      minimumpriority: "warning"
+      checkcert: false
+      customHeaders:
+        Content-Type: "application/json"
+        X-Source: "falco-sidekick"
+---
+# Secret za Falcosidekick credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: falcosidekick-secrets
+  namespace: falco
+type: Opaque
+stringData:
+  ELASTICSEARCH_PASSWORD: "changeme"
+  SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/XXX/YYY/ZZZ"
+  PAGERDUTY_ROUTING_KEY: "your-routing-key"
+---
+# Falcosidekick Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: falcosidekick
+  namespace: falco
+  labels:
+    app.kubernetes.io/name: falcosidekick
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: falcosidekick
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: falcosidekick
+    spec:
+      containers:
+      - name: falcosidekick
+        image: falcosecurity/falcosidekick:2.28.0
+        ports:
+        - containerPort: 2801
+          name: http
+          protocol: TCP
+        envFrom:
+        - secretRef:
+            name: falcosidekick-secrets
+        volumeMounts:
+        - name: config
+          mountPath: /etc/falcosidekick
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 2801
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 2801
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: falcosidekick-config
+---
+# Service za Falcosidekick
+apiVersion: v1
+kind: Service
+metadata:
+  name: falcosidekick
+  namespace: falco
+spec:
+  selector:
+    app.kubernetes.io/name: falcosidekick
+  ports:
+  - port: 2801
+    targetPort: 2801
+    name: http

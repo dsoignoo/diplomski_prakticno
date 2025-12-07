@@ -1,0 +1,81 @@
+# Falco Custom Rules - Unauthorized Database Access
+# Detekcija neautorizovanog pristupa bazama podataka
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-rules-db-access
+  namespace: falco
+  labels:
+    app.kubernetes.io/name: falco
+    app.kubernetes.io/component: rules
+data:
+  unauthorized-db-access.yaml: |
+    # Unauthorized PostgreSQL access detection
+    - rule: Unauthorized PostgreSQL Access from Semaphore
+      desc: >
+        Detektuje pokušaje pristupa PostgreSQL bazi iz podova koji
+        nisu ovlašteni za direktan pristup bazi.
+      condition: >
+        fd.sip exists and container and
+        fd.sport = 5432 and
+        k8s.ns.name = "semaphore" and
+        not k8s.deployment.name in (guard, controller, projecthub, branchhub, artifacthub, userhub, organizationhub)
+      output: >
+        Unauthorized database connection attempt
+        (source_pod=%k8s.pod.name source_deployment=%k8s.deployment.name
+        dest_ip=%fd.sip dest_port=%fd.sport
+        namespace=%k8s.ns.name image=%container.image.repository
+        process=%proc.name cmdline=%proc.cmdline)
+      priority: WARNING
+      source: syscall
+      tags: [network, database, semaphore, mitre_lateral_movement]
+
+    # Detekcija pristupa Redis-u iz neovlaštenih podova
+    - rule: Unauthorized Redis Access from Semaphore
+      desc: Detektuje neovlašteni pristup Redis servisu
+      condition: >
+        fd.sip exists and container and
+        fd.sport = 6379 and
+        k8s.ns.name = "semaphore" and
+        not k8s.deployment.name in (guard, front, controller, cache)
+      output: >
+        Unauthorized Redis connection attempt
+        (source_pod=%k8s.pod.name dest_ip=%fd.sip dest_port=%fd.sport
+        namespace=%k8s.ns.name process=%proc.name)
+      priority: WARNING
+      source: syscall
+      tags: [network, redis, semaphore, mitre_lateral_movement]
+
+    # Detekcija pristupa RabbitMQ iz neovlaštenih podova
+    - rule: Unauthorized RabbitMQ Access from Semaphore
+      desc: Detektuje neovlašteni pristup RabbitMQ message brokeru
+      condition: >
+        fd.sip exists and container and
+        fd.sport in (5672, 15672) and
+        k8s.ns.name = "semaphore" and
+        not k8s.deployment.name in (controller, guard, scheduler, plumber, zebrunner)
+      output: >
+        Unauthorized RabbitMQ connection attempt
+        (source_pod=%k8s.pod.name dest_ip=%fd.sip dest_port=%fd.sport
+        namespace=%k8s.ns.name process=%proc.name)
+      priority: WARNING
+      source: syscall
+      tags: [network, rabbitmq, semaphore, mitre_lateral_movement]
+
+    # Detekcija SQL injection pokušaja
+    - rule: Potential SQL Injection Attempt
+      desc: Detekcija potencijalnih SQL injection napada
+      condition: >
+        spawned_process and container and
+        k8s.ns.name = "semaphore" and
+        (
+          proc.cmdline contains "SELECT" and proc.cmdline contains "FROM" and
+          (proc.cmdline contains "UNION" or proc.cmdline contains "OR 1=1" or proc.cmdline contains "--")
+        )
+      output: >
+        Potential SQL injection attempt detected
+        (user=%user.name command=%proc.cmdline pod=%k8s.pod.name
+        namespace=%k8s.ns.name)
+      priority: CRITICAL
+      source: syscall
+      tags: [container, database, sqli, semaphore, mitre_initial_access]

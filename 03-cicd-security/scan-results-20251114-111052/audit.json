@@ -1,0 +1,152 @@
+{
+  "SchemaVersion": 2,
+  "CreatedAt": "2025-11-14T11:12:00.896231985+01:00",
+  "ArtifactName": "ghcr.io/semaphoreio/audit:bd10abf1870c8247bb7b12e922aa865863255066",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "OS": {
+      "Family": "alpine",
+      "Name": "3.21.1"
+    },
+    "ImageID": "sha256:889a7c388a977611041e274fe771ebcd1f59c4e548c1b427abc388dc77e6fb09",
+    "DiffIDs": [
+      "sha256:6a0022046697eaf2aca84b29a6c0ae52e19797e6b4cc56c880d7a1ecf597d692",
+      "sha256:c30472d7b25ce3fe3d948e0a1d9ec5dcd8ecb35fa928d93266980ccc787040d3",
+      "sha256:ab9f509168ebbd2fa25a5fe1b68bdca194e68f8875f8fbe5dcb0cf851765c889",
+      "sha256:3687cc30c1ed9dae9d01b24fbba0ac67f6112b5012c4ae23c6298939c1646abb",
+      "sha256:c95d681289ac5a829738e5018f566c9a92e3dcc66f71b64da397c6effd35d4d1",
+      "sha256:f93abc4227afea7effe76d50021db482e2c8ed142b45fa8a784341a17c2e6563"
+    ],
+    "RepoTags": [
+      "ghcr.io/semaphoreio/audit:bd10abf1870c8247bb7b12e922aa865863255066"
+    ],
+    "RepoDigests": [
+      "ghcr.io/semaphoreio/audit@sha256:3126e56fd63ec9a5b3351d3466992fd0a12d630691347d3bc337939ab89b6941"
+    ],
+    "ImageConfig": {
+      "architecture": "amd64",
+      "created": "2025-06-05T12:42:08.906664776Z",
+      "history": [
+        {
+          "created": "2025-01-06T19:11:15Z",
+          "created_by": "ADD alpine-minirootfs-3.21.1-x86_64.tar.gz / # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-01-06T19:11:15Z",
+          "created_by": "CMD [\"/bin/sh\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-06-05T12:40:24.376174734Z",
+          "created_by": "LABEL org.opencontainers.image.source=https://github.com/semaphoreio/semaphore",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-06-05T12:40:24.376174734Z",
+          "created_by": "HEALTHCHECK \u0026{[\"NONE\"] \"0s\" \"0s\" \"0s\" \"0s\" '\\x00'}",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-06-05T12:40:24.376174734Z",
+          "created_by": "ARG APP_NAME=audit",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-06-05T12:40:24.376174734Z",
+          "created_by": "ENV APP_NAME=audit",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-06-05T12:40:24.376174734Z",
+          "created_by": "ENV MIX_ENV=prod",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-06-05T12:40:24.376174734Z",
+          "created_by": "RUN |1 APP_NAME=audit /bin/sh -c apk update \u0026\u0026 apk add --no-cache libstdc++ openssl ncurses-libs openssh-keygen # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-06-05T12:40:24.395252849Z",
+          "created_by": "WORKDIR /app",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-06-05T12:40:24.690210831Z",
+          "created_by": "RUN |1 APP_NAME=audit /bin/sh -c adduser -D default -h /app # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-06-05T12:40:24.690210831Z",
+          "created_by": "USER default",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-06-05T12:42:08.883108698Z",
+          "created_by": "COPY --chown=default /app/audit/_build/prod/rel/audit/ . # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-06-05T12:42:08.906664776Z",
+          "created_by": "COPY --chown=default /app/audit/priv/repo/migrations priv/repo/migrations # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-06-05T12:42:08.906664776Z",
+          "created_by": "CMD [\"/app/bin/audit\" \"start\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        }
+      ],
+      "os": "linux",
+      "rootfs": {
+        "type": "layers",
+        "diff_ids": [
+          "sha256:6a0022046697eaf2aca84b29a6c0ae52e19797e6b4cc56c880d7a1ecf597d692",
+          "sha256:c30472d7b25ce3fe3d948e0a1d9ec5dcd8ecb35fa928d93266980ccc787040d3",
+          "sha256:ab9f509168ebbd2fa25a5fe1b68bdca194e68f8875f8fbe5dcb0cf851765c889",
+          "sha256:3687cc30c1ed9dae9d01b24fbba0ac67f6112b5012c4ae23c6298939c1646abb",
+          "sha256:c95d681289ac5a829738e5018f566c9a92e3dcc66f71b64da397c6effd35d4d1",
+          "sha256:f93abc4227afea7effe76d50021db482e2c8ed142b45fa8a784341a17c2e6563"
+        ]
+      },
+      "config": {
+        "Cmd": [
+          "/app/bin/audit",
+          "start"
+        ],
+        "Healthcheck": {
+          "Test": [
+            "NONE"
+          ]
+        },
+        "Env": [
+          "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "APP_NAME=audit",
+          "MIX_ENV=prod"
+        ],
+        "Labels": {
+          "org.opencontainers.image.source": "https://github.com/semaphoreio/semaphore"
+        },
+        "User": "default",
+        "WorkingDir": "/app",
+        "ArgsEscaped": true
+      }
+    }
+  },
+  "Results": [
+    {
+      "Target": "ghcr.io/semaphoreio/audit:bd10abf1870c8247bb7b12e922aa865863255066 (alpine 3.21.1)",
+      "Class": "os-pkgs",
+      "Type": "alpine"
+    }
+  ]
+}

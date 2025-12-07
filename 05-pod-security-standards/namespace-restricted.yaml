@@ -1,0 +1,27 @@
+# Pod Security Standards namespace labele
+# Ovo postavlja restricted profile za semaphore namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: semaphore
+  labels:
+    # Enforce: odbija podove koji ne zadovoljavaju restricted profile
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    # Audit: loguje upozorenja za podove koji ne zadovoljavaju
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    # Warn: prikazuje upozorenja korisniku
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+---
+# Baseline profile za manje kritične namespace-ove
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: semaphore-staging
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

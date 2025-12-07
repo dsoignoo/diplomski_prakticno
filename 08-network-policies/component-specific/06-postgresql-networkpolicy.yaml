@@ -1,0 +1,124 @@
+# NetworkPolicy za PostgreSQL database
+# KRITIČNA KONTROLA: Samo autorizirani servisi mogu pristupiti bazi
+# Blokira lateral movement i unauthorized data access
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgresql-networkpolicy
+  namespace: semaphore
+  labels:
+    app.kubernetes.io/name: semaphore
+    app.kubernetes.io/component: postgresql
+    security.semaphore.io/policy: component-specific
+    security.semaphore.io/criticality: critical
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: postgresql
+
+  policyTypes:
+  - Ingress
+  - Egress
+
+  ingress:
+  # Allow ONLY from Guard service (authentication data, user management)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: guard
+          component: api
+    ports:
+    - protocol: TCP
+      port: 5432
+
+  # Allow from ArtifactHub (artifact metadata storage)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: artifacthub
+    ports:
+    - protocol: TCP
+      port: 5432
+
+  # Allow from RepHub (repository metadata)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: repohub
+    ports:
+    - protocol: TCP
+      port: 5432
+
+  # Allow from ProjectHub (project configuration)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: projecthub
+    ports:
+    - protocol: TCP
+      port: 5432
+
+  # Allow from RBAC service (permissions persistence)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: rbac
+    ports:
+    - protocol: TCP
+      port: 5432
+
+  # Allow from Plumber (workflow metadata)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: plumber
+    ports:
+    - protocol: TCP
+      port: 5432
+
+  # Allow from other PostgreSQL pods (replication, if configured)
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: postgresql
+    ports:
+    - protocol: TCP
+      port: 5432
+
+  # Allow from backup/maintenance pods (labeled specifically)
+  - from:
+    - podSelector:
+        matchLabels:
+          role: database-maintenance
+    ports:
+    - protocol: TCP
+      port: 5432
+
+  egress:
+  # DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+  # Allow to other PostgreSQL pods (replication)
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: postgresql
+    ports:
+    - protocol: TCP
+      port: 5432
+
+  # Allow to GCS for backup (ako koristimo Cloud SQL Proxy ili backup-ove)
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443

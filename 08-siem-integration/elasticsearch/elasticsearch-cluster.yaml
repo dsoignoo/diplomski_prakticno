@@ -1,0 +1,249 @@
+# Elasticsearch Cluster za SIEM
+# 3-node cluster sa persistence i resource limits
+
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: semaphore-es
+  namespace: elk
+spec:
+  version: 8.11.0
+
+  # 3-node cluster za high availability
+  nodeSets:
+  - name: default
+    count: 3
+    config:
+      # Cluster name
+      cluster.name: semaphore-siem
+
+      # Node roles: master, data, ingest
+      node.roles: ["master", "data", "ingest"]
+
+      # Memory settings
+      node.store.allow_mmap: false
+
+      # Index settings
+      indices.query.bool.max_clause_count: 10000
+
+      # Security settings
+      xpack.security.enabled: true
+      xpack.security.transport.ssl.enabled: true
+      xpack.security.http.ssl.enabled: true
+
+      # ILM settings
+      xpack.ilm.enabled: true
+
+      # Monitoring
+      xpack.monitoring.collection.enabled: true
+
+    # Pod template
+    podTemplate:
+      metadata:
+        labels:
+          app: elasticsearch
+          role: siem
+      spec:
+        # Init container za sysctl settings
+        initContainers:
+        - name: sysctl
+          securityContext:
+            privileged: true
+          command: ['sh', '-c', 'sysctl -w vm.max_map_count=262144']
+
+        containers:
+        - name: elasticsearch
+          env:
+          # JVM heap size (50% of container memory)
+          - name: ES_JAVA_OPTS
+            value: "-Xms2g -Xmx2g"
+
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 1000m
+            limits:
+              memory: 4Gi
+              cpu: 2000m
+
+        # Security context
+        securityContext:
+          fsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+
+    # Volume claim template
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        storageClassName: standard-rwo
+        resources:
+          requests:
+            storage: 100Gi
+
+  # HTTP service
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: false
+    service:
+      spec:
+        type: ClusterIP
+
+  # Transport service (inter-node communication)
+  transport:
+    tls:
+      selfSignedCertificate:
+        disabled: false
+
+---
+# Elasticsearch ServiceMonitor za Prometheus
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: elasticsearch
+  namespace: elk
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      common.k8s.elastic.co/type: elasticsearch
+  endpoints:
+  - port: https
+    interval: 30s
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: true
+    basicAuth:
+      username:
+        name: semaphore-es-elastic-user
+        key: elastic
+      password:
+        name: semaphore-es-elastic-user
+        key: elastic
+
+---
+# Index Lifecycle Management Policy
+# Kreirati nakon što se Elasticsearch pokrene:
+# PUT _ilm/policy/security-logs-policy
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-ilm-policy
+  namespace: elk
+data:
+  security-logs-policy.json: |
+    {
+      "policy": {
+        "phases": {
+          "hot": {
+            "min_age": "0ms",
+            "actions": {
+              "rollover": {
+                "max_size": "50gb",
+                "max_age": "7d"
+              },
+              "set_priority": {
+                "priority": 100
+              }
+            }
+          },
+          "warm": {
+            "min_age": "7d",
+            "actions": {
+              "set_priority": {
+                "priority": 50
+              },
+              "forcemerge": {
+                "max_num_segments": 1
+              },
+              "shrink": {
+                "number_of_shards": 1
+              }
+            }
+          },
+          "delete": {
+            "min_age": "30d",
+            "actions": {
+              "delete": {}
+            }
+          }
+        }
+      }
+    }
+
+---
+# Index templates
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-index-templates
+  namespace: elk
+data:
+  falco-template.json: |
+    {
+      "index_patterns": ["falco-*"],
+      "template": {
+        "settings": {
+          "number_of_shards": 3,
+          "number_of_replicas": 1,
+          "index.lifecycle.name": "security-logs-policy",
+          "index.lifecycle.rollover_alias": "falco"
+        },
+        "mappings": {
+          "properties": {
+            "@timestamp": { "type": "date" },
+            "priority": { "type": "keyword" },
+            "rule": { "type": "text", "fields": { "keyword": { "type": "keyword" } } },
+            "output": { "type": "text" },
+            "k8s.pod.name": { "type": "keyword" },
+            "k8s.ns.name": { "type": "keyword" },
+            "container.id": { "type": "keyword" },
+            "proc.name": { "type": "keyword" },
+            "proc.cmdline": { "type": "text" },
+            "fd.name": { "type": "keyword" },
+            "user.name": { "type": "keyword" }
+          }
+        }
+      }
+    }
+
+  filebeat-template.json: |
+    {
+      "index_patterns": ["filebeat-*"],
+      "template": {
+        "settings": {
+          "number_of_shards": 3,
+          "number_of_replicas": 1,
+          "index.lifecycle.name": "security-logs-policy"
+        }
+      }
+    }
+
+  k8s-audit-template.json: |
+    {
+      "index_patterns": ["k8s-audit-*"],
+      "template": {
+        "settings": {
+          "number_of_shards": 3,
+          "number_of_replicas": 1,
+          "index.lifecycle.name": "security-logs-policy"
+        },
+        "mappings": {
+          "properties": {
+            "@timestamp": { "type": "date" },
+            "verb": { "type": "keyword" },
+            "objectRef.resource": { "type": "keyword" },
+            "objectRef.name": { "type": "keyword" },
+            "objectRef.namespace": { "type": "keyword" },
+            "user.username": { "type": "keyword" },
+            "sourceIPs": { "type": "ip" },
+            "responseStatus.code": { "type": "integer" }
+          }
+        }
+      }
+    }

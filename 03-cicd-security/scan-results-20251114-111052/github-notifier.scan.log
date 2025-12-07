@@ -1,0 +1,11 @@
+2025-11-14T11:11:53.238+0100	[34mINFO[0m	Vulnerability scanning is enabled
+2025-11-14T11:11:53.238+0100	[34mINFO[0m	Secret scanning is enabled
+2025-11-14T11:11:53.238+0100	[34mINFO[0m	If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2025-11-14T11:11:53.238+0100	[34mINFO[0m	Please see also https://aquasecurity.github.io/trivy/v0.50/docs/scanner/secret/#recommendation for faster secret detection
+2025-11-14T11:11:53.606+0100	[31mFATAL[0m	image scan error: scan error: unable to initialize a scanner: unable to initialize an image scanner: 4 errors occurred:
+	* docker error: unable to inspect the image (ghcr.io/semaphoreio/github-notifier:ca99da955f57364a0742800c4be606f7273dd5b0): Error response from daemon: No such image: ghcr.io/semaphoreio/github-notifier:ca99da955f57364a0742800c4be606f7273dd5b0
+	* containerd error: failed to initialize a containerd client: failed to dial "/run/containerd/containerd.sock": connection error: desc = "transport: error while dialing: dial unix /run/containerd/containerd.sock: connect: permission denied"
+	* podman error: unable to initialize Podman client: no podman socket found: stat /run/user/1000/podman/podman.sock: no such file or directory
+	* remote error: GET https://ghcr.io/token?scope=repository%3Asemaphoreio%2Fgithub-notifier%3Apull&service=ghcr.io: DENIED: requested access to the resource is denied
+
+

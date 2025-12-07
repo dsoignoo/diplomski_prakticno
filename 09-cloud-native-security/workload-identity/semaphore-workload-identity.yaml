@@ -1,0 +1,181 @@
+# Workload Identity Setup za Semaphore komponente
+# Omogućava pristup Google Cloud servisima bez service account ključeva
+
+---
+# Google Service Account (kreirati putem gcloud)
+# gcloud iam service-accounts create semaphore-guard-sa --project=YOUR_PROJECT_ID
+# gcloud iam service-accounts create semaphore-artifacthub-sa --project=YOUR_PROJECT_ID
+
+---
+# Kubernetes Service Accounts sa Workload Identity annotation
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: guard
+  namespace: semaphore
+  annotations:
+    # Bind sa Google SA
+    iam.gke.io/gcp-service-account: semaphore-guard-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com
+  labels:
+    app: guard
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: artifacthub
+  namespace: semaphore
+  annotations:
+    iam.gke.io/gcp-service-account: semaphore-artifacthub-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com
+  labels:
+    app: artifacthub
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rephub
+  namespace: semaphore
+  annotations:
+    iam.gke.io/gcp-service-account: semaphore-rephub-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com
+  labels:
+    app: rephub
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: projecthub
+  namespace: semaphore
+  annotations:
+    iam.gke.io/gcp-service-account: semaphore-projecthub-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com
+  labels:
+    app: projecthub
+
+---
+# IAM Policy Bindings (izvršiti putem gcloud)
+# Omogućava Kubernetes SA da impersonate Google SA
+
+# Za guard (potreban pristup Cloud SQL i Secret Manager)
+# gcloud iam service-accounts add-iam-policy-binding \
+#   semaphore-guard-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com \
+#   --role roles/iam.workloadIdentityUser \
+#   --member "serviceAccount:YOUR_PROJECT_ID.svc.id.goog[semaphore/guard]"
+
+# gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+#   --member="serviceAccount:semaphore-guard-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+#   --role="roles/cloudsql.client"
+
+# gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+#   --member="serviceAccount:semaphore-guard-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+#   --role="roles/secretmanager.secretAccessor"
+
+---
+# Za artifacthub (potreban pristup GCS za artifact storage)
+# gcloud iam service-accounts add-iam-policy-binding \
+#   semaphore-artifacthub-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com \
+#   --role roles/iam.workloadIdentityUser \
+#   --member "serviceAccount:YOUR_PROJECT_ID.svc.id.goog[semaphore/artifacthub]"
+
+# gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+#   --member="serviceAccount:semaphore-artifacthub-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+#   --role="roles/storage.objectAdmin"
+
+---
+# Deployment example sa Workload Identity enabled
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guard
+  namespace: semaphore
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: guard
+  template:
+    metadata:
+      labels:
+        app: guard
+    spec:
+      # Koristi Service Account sa Workload Identity
+      serviceAccountName: guard
+
+      containers:
+      - name: guard
+        image: semaphoreui/guard:latest
+        env:
+        # Application će automatski koristiti Workload Identity
+        # za pristup Google Cloud servisima
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: ""  # Ne treba eksplicitno postavljati
+
+        - name: DB_HOST
+          value: "/cloudsql/YOUR_PROJECT_ID:us-central1:semaphore-db"
+
+        # Secret iz Google Secret Manager (preko External Secrets Operator)
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: semaphore-db-password
+              key: password
+
+        volumeMounts:
+        # Cloud SQL Proxy socket (ako koristimo Cloud SQL)
+        - name: cloudsql
+          mountPath: /cloudsql
+          readOnly: true
+
+      volumes:
+      # Cloud SQL Proxy sidecar (koristi Workload Identity)
+      - name: cloudsql
+        emptyDir: {}
+
+      # Cloud SQL Proxy sidecar container
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.7.0
+        args:
+          - "--structured-logs"
+          - "--port=5432"
+          - "YOUR_PROJECT_ID:us-central1:semaphore-db"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+        volumeMounts:
+        - name: cloudsql
+          mountPath: /cloudsql
+
+---
+# Test pod za verifikaciju Workload Identity
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: workload-identity-test
+  namespace: semaphore
+spec:
+  serviceAccountName: guard
+  containers:
+  - name: test
+    image: google/cloud-sdk:slim
+    command:
+      - /bin/bash
+      - -c
+      - |
+        echo "Testing Workload Identity..."
+
+        # Test 1: Provjeri metadata server
+        curl -H "Metadata-Flavor: Google" \
+          http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email
+
+        # Test 2: List GCS buckets (ako ima permissions)
+        gcloud storage buckets list --project=YOUR_PROJECT_ID
+
+        # Test 3: Access Secret Manager (ako ima permissions)
+        gcloud secrets versions access latest --secret=semaphore-db-password
+
+        echo "Workload Identity is working!"
+        sleep 3600
+  restartPolicy: Never

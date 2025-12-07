@@ -1,0 +1,46 @@
+# Grafana datasource za Jaeger
+# Apply nakon instalacije Jaeger-a
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasource-jaeger
+  namespace: monitoring
+  labels:
+    grafana_datasource: "1"
+data:
+  jaeger-datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+    - name: Jaeger
+      type: jaeger
+      uid: jaeger
+      access: proxy
+      url: http://semaphore-jaeger-query.observability:16686
+      jsonData:
+        # Node Graph visualization
+        nodeGraph:
+          enabled: true
+        # Trace to logs
+        tracesToLogs:
+          datasourceUid: 'loki'
+          tags: ['pod', 'namespace']
+          mappedTags: [{ key: 'service.name', value: 'app' }]
+          mapTagNamesEnabled: true
+          spanStartTimeShift: '-1h'
+          spanEndTimeShift: '1h'
+          filterByTraceID: true
+          filterBySpanID: false
+        # Trace to metrics (Prometheus)
+        tracesToMetrics:
+          datasourceUid: 'prometheus'
+          tags: [{ key: 'service.name', value: 'app' }, { key: 'pod' }]
+          queries:
+            - name: 'Request Rate'
+              query: 'sum(rate(http_requests_total{$$__tags}[5m]))'
+            - name: 'Error Rate'
+              query: 'sum(rate(http_requests_total{$$__tags,status=~"5.."}[5m]))'
+            - name: 'P95 Latency'
+              query: 'histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{$$__tags}[5m])) by (le))'
+      editable: true
+      isDefault: false

@@ -1,0 +1,20 @@
+global:
+  domain:
+    name: "hamir.online"
+
+ingress:
+  enabled: true
+  className: "gce"
+
+  # Use the preserved static IP
+  staticIpName: "global-static-ip-address-baseline"
+
+  ssl:
+    enabled: true
+    # Use the existing Google-managed certificate
+    type: "google"
+    certName: "cert-baseline"
+
+# Override bootstrapper image tag
+bootstrapper:
+  imageTag: "v1.6.0"

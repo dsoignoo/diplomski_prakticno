@@ -1,0 +1,78 @@
+# Promtail Configuration for Semaphore Platform
+# Phase 07: Observability Stack - Log Collection Agent
+
+config:
+  # Send logs to Loki gateway
+  clients:
+    - url: http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push
+
+  snippets:
+    pipelineStages:
+      - cri: {}
+      - regex:
+          expression: '^(?P<time>\S+) (?P<stream>stdout|stderr) (?P<flags>\S+) (?P<message>.*)$'
+      - labels:
+          stream:
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+
+    scrapeConfigs: |
+      # Collect logs from all pods
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+        pipeline_stages:
+          - cri: {}
+        relabel_configs:
+          # Add namespace label
+          - source_labels:
+              - __meta_kubernetes_pod_namespace
+            target_label: namespace
+          # Add pod name label
+          - source_labels:
+              - __meta_kubernetes_pod_name
+            target_label: pod
+          # Add container name label
+          - source_labels:
+              - __meta_kubernetes_pod_container_name
+            target_label: container
+          # Add app label if exists
+          - source_labels:
+              - __meta_kubernetes_pod_label_app
+            target_label: app
+          # Add service label if exists
+          - source_labels:
+              - __meta_kubernetes_pod_label_service
+            target_label: service
+          # Drop empty containers
+          - source_labels:
+              - __meta_kubernetes_pod_container_name
+            regex: ^$
+            action: drop
+          # Path label
+          - source_labels:
+              - __meta_kubernetes_pod_uid
+              - __meta_kubernetes_pod_container_name
+            target_label: __path__
+            separator: /
+            replacement: /var/log/pods/*$1/*.log
+
+# Run as DaemonSet to collect logs from all nodes
+daemonset:
+  enabled: true
+
+# Resource limits
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Service monitor for Prometheus integration
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack

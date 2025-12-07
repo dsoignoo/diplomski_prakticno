@@ -1,0 +1,57 @@
+# Velero Backup Storage Locations
+# Podržava AWS S3, GCP GCS, Azure Blob Storage
+---
+# AWS S3 Backend
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: aws-s3-backup
+  namespace: velero
+spec:
+  provider: aws
+  objectStorage:
+    bucket: semaphore-velero-backups
+    prefix: production
+  config:
+    region: eu-central-1
+    s3ForcePathStyle: "false"
+  credential:
+    name: velero-aws-credentials
+    key: cloud
+---
+# GCP GCS Backend
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: gcp-gcs-backup
+  namespace: velero
+spec:
+  provider: gcp
+  objectStorage:
+    bucket: semaphore-velero-backups-gcp
+    prefix: production
+  config:
+    serviceAccount: velero@semaphore-prod.iam.gserviceaccount.com
+---
+# Volume Snapshot Location za AWS EBS
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: aws-ebs-snapshots
+  namespace: velero
+spec:
+  provider: aws
+  config:
+    region: eu-central-1
+---
+# Volume Snapshot Location za GCP Persistent Disks
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: gcp-pd-snapshots
+  namespace: velero
+spec:
+  provider: gcp
+  config:
+    project: semaphore-prod
+    snapshotLocation: europe-west1

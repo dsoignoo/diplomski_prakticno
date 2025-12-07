@@ -1,0 +1,59 @@
+# ConstraintTemplate: Zahtijeva CPU i memory limits
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequiredresources
+  annotations:
+    description: >-
+      Zahtijeva da svi kontejneri imaju definirane CPU i memory limits
+      za sprječavanje resource exhaustion napada
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequiredResources
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            exemptImages:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequiredresources
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.resources.limits.memory
+          not exempt_image(container.image)
+          msg := sprintf("Kontejner %v nema memory limit", [container.name])
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.resources.limits.cpu
+          not exempt_image(container.image)
+          msg := sprintf("Kontejner %v nema CPU limit", [container.name])
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.resources.requests.memory
+          not exempt_image(container.image)
+          msg := sprintf("Kontejner %v nema memory request", [container.name])
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.resources.requests.cpu
+          not exempt_image(container.image)
+          msg := sprintf("Kontejner %v nema CPU request", [container.name])
+        }
+
+        exempt_image(image) {
+          exempt := input.parameters.exemptImages[_]
+          startswith(image, exempt)
+        }

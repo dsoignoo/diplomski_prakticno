@@ -1,0 +1,279 @@
+=== Cluster Configuration ===
+addonsConfig:
+  gcePersistentDiskCsiDriverConfig:
+    enabled: true
+  gcpFilestoreCsiDriverConfig:
+    enabled: true
+  gcsFuseCsiDriverConfig:
+    enabled: true
+  horizontalPodAutoscaling: {}
+  httpLoadBalancing: {}
+  kubernetesDashboard:
+    disabled: true
+  networkPolicyConfig:
+    disabled: true
+anonymousAuthenticationConfig:
+  mode: ENABLED
+autopilot: {}
+autoscaling:
+  autoprovisioningNodePoolDefaults:
+    imageType: COS_CONTAINERD
+    management:
+      autoRepair: true
+      autoUpgrade: true
+    oauthScopes:
+    - https://www.googleapis.com/auth/devstorage.read_only
+    - https://www.googleapis.com/auth/logging.write
+    - https://www.googleapis.com/auth/monitoring
+    - https://www.googleapis.com/auth/service.management.readonly
+    - https://www.googleapis.com/auth/servicecontrol
+    - https://www.googleapis.com/auth/trace.append
+    serviceAccount: default
+  autoscalingProfile: BALANCED
+binaryAuthorization:
+  evaluationMode: DISABLED
+clusterIpv4Cidr: 10.4.0.0/14
+controlPlaneEndpointsConfig:
+  dnsEndpointConfig:
+    allowExternalTraffic: false
+    enableK8sCertsViaDns: false
+    enableK8sTokensViaDns: false
+    endpoint: gke-8427fe81921b42df9ef9b487a9604a6b2c35-540850998985.us-central1.gke.goog
+  ipEndpointsConfig:
+    authorizedNetworksConfig:
+      cidrBlocks:
+      - cidrBlock: 10.0.16.0/28
+        displayName: Bastion subnet
+      enabled: true
+      privateEndpointEnforcementEnabled: true
+    enablePublicEndpoint: false
+    enabled: true
+    privateEndpoint: 172.16.0.2
+    privateEndpointSubnetwork: projects/semaphoreci-deployment/regions/us-central1/subnetworks/gke-semaphore-hardened-cbfd3076-pe-subnet
+createTime: '2025-11-13T18:02:22+00:00'
+currentMasterVersion: 1.33.5-gke.1201000
+currentNodeCount: 3
+currentNodeVersion: 1.33.5-gke.1201000
+databaseEncryption:
+  currentState: CURRENT_STATE_ENCRYPTED
+  keyName: projects/semaphoreci-deployment/locations/us-central1/keyRings/semaphore-hardened-keyring/cryptoKeys/semaphore-hardened-secrets-key
+  state: ENCRYPTED
+defaultMaxPodsConstraint:
+  maxPodsPerNode: '110'
+endpoint: 172.16.0.2
+enterpriseConfig:
+  clusterTier: STANDARD
+etag: 847b160e-3dff-4e34-91f4-7d755095059c
+id: 8427fe81921b42df9ef9b487a9604a6b2c35cc66309641fa95f5c57d153f4708
+initialClusterVersion: 1.33.5-gke.1201000
+initialNodeCount: 1
+instanceGroupUrls:
+- https://www.googleapis.com/compute/v1/projects/semaphoreci-deployment/zones/us-central1-c/instanceGroupManagers/gke-semaphore-harden-semaphore-harden-69cc3a7f-grp
+- https://www.googleapis.com/compute/v1/projects/semaphoreci-deployment/zones/us-central1-f/instanceGroupManagers/gke-semaphore-harden-semaphore-harden-1625dc09-grp
+- https://www.googleapis.com/compute/v1/projects/semaphoreci-deployment/zones/us-central1-b/instanceGroupManagers/gke-semaphore-harden-semaphore-harden-d630e8c3-grp
+ipAllocationPolicy:
+  clusterIpv4Cidr: 10.4.0.0/14
+  clusterIpv4CidrBlock: 10.4.0.0/14
+  clusterSecondaryRangeName: pods-range
+  defaultPodIpv4RangeUtilization: 0.0029
+  networkTierConfig:
+    networkTier: NETWORK_TIER_DEFAULT
+  podCidrOverprovisionConfig: {}
+  servicesIpv4Cidr: 10.8.0.0/20
+  servicesIpv4CidrBlock: 10.8.0.0/20
+  servicesSecondaryRangeName: services-range
+  stackType: IPV4
+  useIpAliases: true
+labelFingerprint: bdfb35cc
+legacyAbac: {}
+location: us-central1
+locations:
+- us-central1-c
+- us-central1-f
+- us-central1-b
+loggingConfig:
+  componentConfig:
+    enableComponents:
+    - SYSTEM_COMPONENTS
+    - WORKLOADS
+loggingService: logging.googleapis.com/kubernetes
+maintenancePolicy:
+  resourceVersion: 93731cbd
+  window:
+    dailyMaintenanceWindow:
+      duration: PT4H0M0S
+      startTime: 03:00
+masterAuth:
+  clientCertificateConfig: {}
+  clusterCaCertificate: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVMVENDQXBXZ0F3SUJBZ0lSQUpGTmF6RzNaUXFSVmdta3p4bStBVE13RFFZSktvWklodmNOQVFFTEJRQXcKTHpFdE1Dc0dBMVVFQXhNa00yVmpOVE0zTXpFdE1qUTRNQzAwT1dWaExXSmxabU10WVdSa01EZzNaV1E1WkRneApNQ0FYRFRJMU1URXhNekUzTURJeU0xb1lEekl3TlRVeE1UQTJNVGd3TWpJeldqQXZNUzB3S3dZRFZRUURFeVF6ClpXTTFNemN6TVMweU5EZ3dMVFE1WldFdFltVm1ZeTFoWkdRd09EZGxaRGxrT0RFd2dnR2lNQTBHQ1NxR1NJYjMKRFFFQkFRVUFBNElCandBd2dnR0tBb0lCZ1FDb0czaXJOWDFwZGFRWmkrbGN1K3REbnNDUDhXaEVCcGJvWEcxeAoxV1Q0TFgrMlB2Y1UvQ1lkZ1lVekVmSFZzeEZJbUZvWGhDenRiblh3Q1NCdCtVZVNwV2lON1oyOVk3aHRGRWdwCmNQdTY3cVJMN2QxcWVvZzNGZGFtVitCVlVLN0pDcmNwZWdXM0tLTU44UUVFeHF6czhYM3BOUGU5cVVzVUtEZG4KSEROV3h2QURBMzd5R0E4N0Q0V0JFZUtod00vZjlXQSt1aWFhTkl4NzQ0ZmdBL043Y0wySkhPR3c5cWJoZ2hRQgpzWHFYM3dWdnd0OUJ6dlh4T3VZenNONlpQamU5Zm55TkwvYy83NUJkVk5KLzVxVjErb2tmMHZia0trU1JTWUNYClVCaEJyVjlRcFJWbjBUQ0JVS2VaVWpGUncwOVlIbEM2MXZFc0w5b3A1eTZFYTZweVg1dGpEaFoxUXpHd2w4U3MKN0xUUktoM0FzL3Q1aHZhRkRScy9aMzg0THVCNnFzM2hkMDZEN0xUR1RsU2k0NGN3UlV0V0tMb1JjNGlKbGp5NAp2d25qTXl6VGJBWXNZaXhVZEdLOHNINTZMMXNkWURMQ09DSyt6Q1Q0bEZSRHBKcW1GdGExZDR2aTErS1ZFNTdTCko1RnBBTmdMNDR1d1JvWEZZWnBmbzB6MmtFY0NBd0VBQWFOQ01FQXdEZ1lEVlIwUEFRSC9CQVFEQWdJRU1BOEcKQTFVZEV3RUIvd1FGTUFNQkFmOHdIUVlEVlIwT0JCWUVGRDErc04rTHVnOEFlUnE4K0dSa0VqL3UzS0I2TUEwRwpDU3FHU0liM0RRRUJDd1VBQTRJQmdRQlpJWHVuRDV1eVRQamR1TDdocVZBa1BIY29Fa1J3N2NrVVN4SVJoblBvCjNjblBYNk5URzAyTkVGb1RJRFk3b3A5MVcrelZlcml5MDFGVU5zK3RkQXlxajRNa3VMRFRrSEdzMjJKVlJwTEkKclduMENPVEs0ekpSUGNveUxJd3RIMGJOTjJGQ0pHK2Q1Y1RodCtKZ3RuZW5URkQ2VUI1eTBJZy9qb2N6K1prbQplb3FHcGtBZ25TVzduMS9OdXI2K200Z2hRUlA4SEVRWHEwWFRTbUx2SHRrdXdTMHRzT05nUlRMd1NxMlNDcU5uCkFGK0JXSWhPUHJFSEJLeXNtVkovMnJzOGlubG13elc1WXQ0dEZiYUU0MEhaWDNrSmMyeWUxWWM1OHMxSjZRSFcKaDlYZWlFWlJUeUFDeXRpWGhYTzllTm1aOHEyUDhYZ2c5b1lRV3JoTEVxN0xQOW9neTIvNi9xbS81Q1UrQ3BQbQoyMXA0YnRTUVgyT0lhbm14LzFoYW5FMTFqK1ZjNk43TWdBbXRYd1hvS1c0eW5ERktFMWFBd3U1YVdhNkc3MnlWCjYzYWtIZWo5TU4xc3VsRDE4YnRFc0RmcXVKNVhMa3Vnb1VzcS8vVmlIaDN4dE9YVTE4S2pPNFRBdjlPNGhRcnIKaDhldkljcnVueVZyZHV1NDhvZkt1QTQ9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+masterAuthorizedNetworksConfig:
+  cidrBlocks:
+  - cidrBlock: 10.0.16.0/28
+    displayName: Bastion subnet
+  enabled: true
+  privateEndpointEnforcementEnabled: true
+monitoringConfig:
+  advancedDatapathObservabilityConfig: {}
+  componentConfig:
+    enableComponents:
+    - SYSTEM_COMPONENTS
+  managedPrometheusConfig:
+    enabled: true
+monitoringService: monitoring.googleapis.com/kubernetes
+name: semaphore-hardened
+network: semaphore-vpc-hardened
+networkConfig:
+  datapathProvider: ADVANCED_DATAPATH
+  defaultEnablePrivateNodes: true
+  defaultSnatStatus: {}
+  network: projects/semaphoreci-deployment/global/networks/semaphore-vpc-hardened
+  serviceExternalIpsConfig: {}
+  subnetwork: projects/semaphoreci-deployment/regions/us-central1/subnetworks/semaphore-vpc-hardened-gke-nodes
+nodeConfig:
+  bootDisk:
+    diskType: pd-standard
+    sizeGb: '100'
+  diskSizeGb: 100
+  diskType: pd-standard
+  effectiveCgroupMode: EFFECTIVE_CGROUP_MODE_V2
+  imageType: COS_CONTAINERD
+  kubeletConfig:
+    insecureKubeletReadonlyPortEnabled: false
+    maxParallelImagePulls: 2
+  labels:
+    cluster: semaphore-hardened
+    environment: production
+  loggingConfig: {}
+  machineType: e2-standard-4
+  metadata:
+    disable-legacy-endpoints: 'true'
+  oauthScopes:
+  - https://www.googleapis.com/auth/monitoring
+  - https://www.googleapis.com/auth/devstorage.read_only
+  - https://www.googleapis.com/auth/logging.write
+  resourceLabels:
+    goog-gke-node-pool-provisioning-model: on-demand
+  serviceAccount: semaphore-hardened-nodes@semaphoreci-deployment.iam.gserviceaccount.com
+  shieldedInstanceConfig:
+    enableIntegrityMonitoring: true
+    enableSecureBoot: true
+  tags:
+  - gke-node
+  - semaphore-hardened-node
+  windowsNodeConfig: {}
+  workloadMetadataConfig:
+    mode: GKE_METADATA
+nodePoolAutoConfig:
+  nodeKubeletConfig:
+    insecureKubeletReadonlyPortEnabled: false
+nodePoolDefaults:
+  nodeConfigDefaults:
+    loggingConfig:
+      variantConfig:
+        variant: DEFAULT
+    nodeKubeletConfig:
+      insecureKubeletReadonlyPortEnabled: false
+nodePools:
+- autoscaling:
+    enabled: true
+    locationPolicy: BALANCED
+    maxNodeCount: 3
+    minNodeCount: 1
+  config:
+    bootDisk:
+      diskType: pd-standard
+      sizeGb: '100'
+    diskSizeGb: 100
+    diskType: pd-standard
+    effectiveCgroupMode: EFFECTIVE_CGROUP_MODE_V2
+    imageType: COS_CONTAINERD
+    kubeletConfig:
+      insecureKubeletReadonlyPortEnabled: false
+      maxParallelImagePulls: 2
+    labels:
+      cluster: semaphore-hardened
+      environment: production
+    loggingConfig: {}
+    machineType: e2-standard-4
+    metadata:
+      disable-legacy-endpoints: 'true'
+    oauthScopes:
+    - https://www.googleapis.com/auth/monitoring
+    - https://www.googleapis.com/auth/devstorage.read_only
+    - https://www.googleapis.com/auth/logging.write
+    resourceLabels:
+      goog-gke-node-pool-provisioning-model: on-demand
+    serviceAccount: semaphore-hardened-nodes@semaphoreci-deployment.iam.gserviceaccount.com
+    shieldedInstanceConfig:
+      enableIntegrityMonitoring: true
+      enableSecureBoot: true
+    tags:
+    - gke-node
+    - semaphore-hardened-node
+    windowsNodeConfig: {}
+    workloadMetadataConfig:
+      mode: GKE_METADATA
+  etag: 14c9c82f-833a-45be-ab0e-2748e1992b31
+  initialNodeCount: 1
+  instanceGroupUrls:
+  - https://www.googleapis.com/compute/v1/projects/semaphoreci-deployment/zones/us-central1-c/instanceGroupManagers/gke-semaphore-harden-semaphore-harden-69cc3a7f-grp
+  - https://www.googleapis.com/compute/v1/projects/semaphoreci-deployment/zones/us-central1-f/instanceGroupManagers/gke-semaphore-harden-semaphore-harden-1625dc09-grp
+  - https://www.googleapis.com/compute/v1/projects/semaphoreci-deployment/zones/us-central1-b/instanceGroupManagers/gke-semaphore-harden-semaphore-harden-d630e8c3-grp
+  locations:
+  - us-central1-c
+  - us-central1-f
+  - us-central1-b
+  management:
+    autoRepair: true
+    autoUpgrade: true
+  maxPodsConstraint:
+    maxPodsPerNode: '110'
+  name: semaphore-hardened-node-pool
+  networkConfig:
+    enablePrivateNodes: true
+    networkTierConfig:
+      networkTier: NETWORK_TIER_DEFAULT
+    podIpv4CidrBlock: 10.4.0.0/14
+    podIpv4RangeUtilization: 0.0029
+    podRange: pods-range
+    subnetwork: projects/semaphoreci-deployment/regions/us-central1/subnetworks/semaphore-vpc-hardened-gke-nodes
+  podIpv4CidrSize: 24
+  selfLink: https://container.googleapis.com/v1/projects/semaphoreci-deployment/locations/us-central1/clusters/semaphore-hardened/nodePools/semaphore-hardened-node-pool
+  status: RUNNING
+  upgradeSettings:
+    maxSurge: 1
+    strategy: SURGE
+  version: 1.33.5-gke.1201000
+notificationConfig:
+  pubsub: {}
+podAutoscaling:
+  hpaProfile: PERFORMANCE
+privateClusterConfig:
+  enablePrivateEndpoint: true
+  enablePrivateNodes: true
+  masterIpv4CidrBlock: 172.16.0.0/28
+  privateEndpoint: 172.16.0.2
+  publicEndpoint: 136.114.199.39
+rbacBindingConfig:
+  enableInsecureBindingSystemAuthenticated: true
+  enableInsecureBindingSystemUnauthenticated: true
+releaseChannel:
+  channel: REGULAR
+resourceLabels:
+  application: semaphore
+  environment: production
+  managed_by: terraform
+  security: hardened
+securityPostureConfig:
+  mode: BASIC
+  vulnerabilityMode: VULNERABILITY_BASIC
+selfLink: https://container.googleapis.com/v1/projects/semaphoreci-deployment/locations/us-central1/clusters/semaphore-hardened
+servicesIpv4Cidr: 10.8.0.0/20
+shieldedNodes:
+  enabled: true
+status: RUNNING
+subnetwork: semaphore-vpc-hardened-gke-nodes
+userManagedKeysConfig: {}
+workloadIdentityConfig:
+  workloadPool: semaphoreci-deployment.svc.id.goog
+zone: us-central1

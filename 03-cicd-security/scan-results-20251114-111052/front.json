@@ -1,0 +1,161 @@
+{
+  "SchemaVersion": 2,
+  "CreatedAt": "2025-11-14T11:11:51.034283398+01:00",
+  "ArtifactName": "ghcr.io/semaphoreio/front:c4bdd9c00662df0ccc0f0a5731d81e39b96ea844",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "OS": {
+      "Family": "alpine",
+      "Name": "3.19.7",
+      "EOSL": true
+    },
+    "ImageID": "sha256:026a273f32b921c65e620ab13c92f67d2c81c3b0d529fbbd81781f43c13b53e7",
+    "DiffIDs": [
+      "sha256:0499fc56f5e2303d8f36d9dd1908d469f446b41e0af05a98a5bcdbcecc799a43",
+      "sha256:fad24e1245e6c344111058e87b03c8184ae241c77c6f703c8edd173ea63cd276",
+      "sha256:d8a1dbda93c060f190693d1710d1074807ecab7f540fb2291ba740450a822352",
+      "sha256:13f1e23c092b9fbb187069a3bc5573be07ee2cd085f4615ccfe869b3484d8454",
+      "sha256:ed12d624a60a9f47e4de43162707328f7f4d360a7cdbb51215c74ab7d8e7f533",
+      "sha256:96b5fbd3ea391f2849952a511f7763505691fe1f9641ca4148de859000712790"
+    ],
+    "RepoTags": [
+      "ghcr.io/semaphoreio/front:c4bdd9c00662df0ccc0f0a5731d81e39b96ea844"
+    ],
+    "RepoDigests": [
+      "ghcr.io/semaphoreio/front@sha256:fd588dec3d6d7742242482a3b486d3e48d7610eedd8aada00acd6440514cec4f"
+    ],
+    "ImageConfig": {
+      "architecture": "amd64",
+      "created": "2025-10-10T15:44:06.144484945Z",
+      "history": [
+        {
+          "created": "2025-02-14T03:05:02Z",
+          "created_by": "ADD alpine-minirootfs-3.19.7-x86_64.tar.gz / # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-02-14T03:05:02Z",
+          "created_by": "CMD [\"/bin/sh\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-10-10T15:40:25.298302805Z",
+          "created_by": "LABEL org.opencontainers.image.source=https://github.com/semaphoreio/semaphore",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-10-10T15:40:25.298302805Z",
+          "created_by": "ARG BUILD_ENV=prod",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-10-10T15:40:25.298302805Z",
+          "created_by": "ENV MIX_ENV=prod",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-10-10T15:40:25.298302805Z",
+          "created_by": "HEALTHCHECK \u0026{[\"NONE\"] \"0s\" \"0s\" \"0s\" \"0s\" '\\x00'}",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-10-10T15:40:25.298302805Z",
+          "created_by": "RUN |1 BUILD_ENV=prod /bin/sh -c apk update     \u0026\u0026 apk add --no-cache libstdc++ openssl ncurses-libs     \u0026\u0026 apk add --no-cache --upgrade busybox busybox-binsh ssl_client # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-10-10T15:40:25.298302805Z",
+          "created_by": "ENV USER=front",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-10-10T15:40:25.32629627Z",
+          "created_by": "WORKDIR /home/front/app",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-10-10T15:40:25.527691177Z",
+          "created_by": "RUN |1 BUILD_ENV=prod /bin/sh -c addgroup     -g 1000     -S \"${USER}\"     \u0026\u0026 adduser     -s /bin/sh     -u 1000     -G \"${USER}\"     -h \"/home/${USER}\"     -D \"${USER}\"     \u0026\u0026 su \"${USER}\" # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-10-10T15:40:25.527691177Z",
+          "created_by": "USER front",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-10-10T15:44:06.107877678Z",
+          "created_by": "COPY --chown=front:front /app/_build/prod/rel/front ./ # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-10-10T15:44:06.144484945Z",
+          "created_by": "COPY --chown=front:front /app/workflow_templates workflow_templates # buildkit",
+          "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2025-10-10T15:44:06.144484945Z",
+          "created_by": "ENTRYPOINT [\"bin/front\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        },
+        {
+          "created": "2025-10-10T15:44:06.144484945Z",
+          "created_by": "CMD [\"start\"]",
+          "comment": "buildkit.dockerfile.v0",
+          "empty_layer": true
+        }
+      ],
+      "os": "linux",
+      "rootfs": {
+        "type": "layers",
+        "diff_ids": [
+          "sha256:0499fc56f5e2303d8f36d9dd1908d469f446b41e0af05a98a5bcdbcecc799a43",
+          "sha256:fad24e1245e6c344111058e87b03c8184ae241c77c6f703c8edd173ea63cd276",
+          "sha256:d8a1dbda93c060f190693d1710d1074807ecab7f540fb2291ba740450a822352",
+          "sha256:13f1e23c092b9fbb187069a3bc5573be07ee2cd085f4615ccfe869b3484d8454",
+          "sha256:ed12d624a60a9f47e4de43162707328f7f4d360a7cdbb51215c74ab7d8e7f533",
+          "sha256:96b5fbd3ea391f2849952a511f7763505691fe1f9641ca4148de859000712790"
+        ]
+      },
+      "config": {
+        "Cmd": [
+          "start"
+        ],
+        "Healthcheck": {
+          "Test": [
+            "NONE"
+          ]
+        },
+        "Entrypoint": [
+          "bin/front"
+        ],
+        "Env": [
+          "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "MIX_ENV=prod",
+          "USER=front"
+        ],
+        "Labels": {
+          "org.opencontainers.image.source": "https://github.com/semaphoreio/semaphore"
+        },
+        "User": "front",
+        "WorkingDir": "/home/front/app",
+        "ArgsEscaped": true
+      }
+    }
+  },
+  "Results": [
+    {
+      "Target": "ghcr.io/semaphoreio/front:c4bdd9c00662df0ccc0f0a5731d81e39b96ea844 (alpine 3.19.7)",
+      "Class": "os-pkgs",
+      "Type": "alpine"
+    }
+  ]
+}

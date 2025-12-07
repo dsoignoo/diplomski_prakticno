@@ -1,0 +1,69 @@
+# Constraint instance za Semaphore namespace
+---
+# Zabrani privilegovane kontejnere
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPPrivilegedContainer
+metadata:
+  name: no-privileged-containers
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    namespaces:
+      - semaphore
+    excludedNamespaces:
+      - kube-system
+  parameters:
+    exemptImages:
+      - "gcr.io/google-containers/kube-proxy"
+---
+# Zahtijevaj resource limits
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredResources
+metadata:
+  name: semaphore-must-have-resources
+spec:
+  match:
+    kinds:
+    - apiGroups: ["apps"]
+      kinds: ["Deployment", "StatefulSet"]
+    namespaces:
+    - semaphore
+  parameters:
+    exemptImages:
+    - "registry.semaphore.io/debug-pod"
+---
+# Blokiraj NodePort servise
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sBlockNodePort
+metadata:
+  name: block-nodeport-semaphore
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Service"]
+    namespaces:
+      - semaphore
+  parameters:
+    allowedNamespaces: []  # Nijedan namespace nije izuzet
+---
+# Zahtijevaj obavezne labele
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredLabels
+metadata:
+  name: semaphore-required-labels
+spec:
+  match:
+    kinds:
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet"]
+    namespaces:
+      - semaphore
+  parameters:
+    labels:
+      - key: "app"
+      - key: "component"
+      - key: "version"
+        allowedRegex: "^v[0-9]+\\.[0-9]+\\.[0-9]+$"

@@ -1,0 +1,157 @@
+# Kibana Instance za SIEM UI
+
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: semaphore-kibana
+  namespace: elk
+spec:
+  version: 8.11.0
+  count: 2  # 2 replicas za HA
+
+  # Elasticsearch reference
+  elasticsearchRef:
+    name: semaphore-es
+    namespace: elk
+
+  # Pod template
+  podTemplate:
+    metadata:
+      labels:
+        app: kibana
+        role: siem
+    spec:
+      containers:
+      - name: kibana
+        env:
+        # Server settings
+        - name: SERVER_NAME
+          value: "semaphore-kibana"
+        - name: SERVER_BASEPATH
+          value: ""
+        - name: SERVER_REWRITEBASEPATH
+          value: "false"
+
+        # Elasticsearch settings
+        - name: ELASTICSEARCH_HOSTS
+          value: "https://semaphore-es-http:9200"
+
+        # X-Pack settings
+        - name: XPACK_SECURITY_ENABLED
+          value: "true"
+        - name: XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY
+          valueFrom:
+            secretKeyRef:
+              name: kibana-encryption-key
+              key: encryptionKey
+
+        # SIEM app settings
+        - name: XPACK_SIEM_ENABLED
+          value: "true"
+        - name: XPACK_ALERTING_ENABLED
+          value: "true"
+
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 500m
+          limits:
+            memory: 2Gi
+            cpu: 1000m
+
+  # HTTP service
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: false
+    service:
+      spec:
+        type: LoadBalancer
+
+  # Kibana configuration
+  config:
+    # UI settings
+    server.name: semaphore-kibana
+    server.publicBaseUrl: https://kibana.semaphore.example.com
+
+    # Elasticsearch
+    elasticsearch.ssl.verificationMode: certificate
+
+    # Monitoring
+    monitoring.ui.enabled: true
+    monitoring.kibana.collection.enabled: true
+
+    # SIEM configuration
+    xpack.siem.enabled: true
+    xpack.siem.alerting.enabled: true
+
+    # Saved objects encryption
+    xpack.encryptedSavedObjects.encryptionKey: ${XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY}
+
+    # Alerting
+    xpack.alerting.enabled: true
+    xpack.actions.enabled: true
+
+    # Machine Learning (opciono, za anomaly detection)
+    xpack.ml.enabled: true
+
+---
+# Kibana encryption key secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kibana-encryption-key
+  namespace: elk
+type: Opaque
+stringData:
+  # Generate sa: openssl rand -base64 32
+  encryptionKey: "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY="
+
+---
+# Kibana Ingress (opciono, ako koristimo Ingress umjesto LoadBalancer)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana
+  namespace: elk
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+spec:
+  tls:
+  - hosts:
+    - kibana.semaphore.example.com
+    secretName: kibana-tls
+  rules:
+  - host: kibana.semaphore.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: semaphore-kibana-kb-http
+            port:
+              number: 5601
+
+---
+# Kibana ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kibana
+  namespace: elk
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      common.k8s.elastic.co/type: kibana
+  endpoints:
+  - port: https
+    interval: 30s
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: true

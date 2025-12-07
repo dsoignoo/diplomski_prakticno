@@ -1,0 +1,3 @@
+=== Node External IPs (should be NONE) ===
+NAME                        INTERNAL_IP  EXTERNAL_IP
+semaphore-hardened-bastion  10.0.16.2    136.111.142.83

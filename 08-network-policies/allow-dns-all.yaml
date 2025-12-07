@@ -1,0 +1,30 @@
+# Allow DNS for all pods in semaphore namespace
+# DNS je potreban za service discovery i external komunikaciju
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-all
+  namespace: semaphore
+  labels:
+    app.kubernetes.io/name: semaphore
+    app.kubernetes.io/component: network-policy
+    security.semaphore.io/policy: dns
+spec:
+  # Applies to ALL pods
+  podSelector: {}
+
+  policyTypes:
+  - Egress
+
+  egress:
+  # Allow DNS queries to kube-dns (port 53 UDP)
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

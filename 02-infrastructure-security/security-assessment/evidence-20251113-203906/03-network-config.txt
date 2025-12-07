@@ -1,0 +1,57 @@
+=== VPC and Network Configuration ===
+autoCreateSubnetworks: false
+creationTimestamp: '2025-11-13T09:57:04.726-08:00'
+description: Custom VPC for hardened GKE cluster
+id: '5476835002068739359'
+kind: compute#network
+name: semaphore-vpc-hardened
+networkFirewallPolicyEnforcementOrder: AFTER_CLASSIC_FIREWALL
+routingConfig:
+  bgpBestPathSelectionMode: LEGACY
+  routingMode: REGIONAL
+selfLink: https://www.googleapis.com/compute/v1/projects/semaphoreci-deployment/global/networks/semaphore-vpc-hardened
+selfLinkWithId: https://www.googleapis.com/compute/v1/projects/semaphoreci-deployment/global/networks/5476835002068739359
+subnetworks:
+- https://www.googleapis.com/compute/v1/projects/semaphoreci-deployment/regions/us-central1/subnetworks/semaphore-vpc-hardened-gke-nodes
+- https://www.googleapis.com/compute/v1/projects/semaphoreci-deployment/regions/us-central1/subnetworks/semaphore-vpc-hardened-bastion
+- https://www.googleapis.com/compute/v1/projects/semaphoreci-deployment/regions/us-central1/subnetworks/gke-semaphore-hardened-cbfd3076-pe-subnet
+x_gcloud_bgp_routing_mode: REGIONAL
+x_gcloud_subnet_mode: CUSTOM
+
+=== Firewall Rules ===
+NAME                                           DIRECTION  PRIORITY  SRC_RANGES                                        ALLOW                         TARGET_TAGS
+gke-semaphore-hardened-8427fe81-all            INGRESS    1000      10.4.0.0/14                                       esp,ah,sctp,tcp,udp,icmp      gke-semaphore-hardened-8427fe81-node
+gke-semaphore-hardened-8427fe81-exkubelet      INGRESS    1000      0.0.0.0/0                                                                       gke-semaphore-hardened-8427fe81-node
+gke-semaphore-hardened-8427fe81-inkubelet      INGRESS    999       10.4.0.0/14                                       tcp:10255                     gke-semaphore-hardened-8427fe81-node
+gke-semaphore-hardened-8427fe81-vms            INGRESS    1000      10.0.0.0/20                                       icmp,tcp:1-65535,udp:1-65535  gke-semaphore-hardened-8427fe81-node
+k8s-fw-l7--ed565d60343af9e7                    INGRESS    1000      130.211.0.0/22,35.191.0.0/16                      tcp:8080,tcp:8877             gke-semaphore-hardened-8427fe81-node
+semaphore-vpc-hardened-allow-iap-ssh           INGRESS    1000      35.235.240.0/20                                   tcp:22                        bastion
+semaphore-vpc-hardened-allow-internal          INGRESS    1000      10.4.0.0/14,10.0.0.0/20,10.0.16.0/28,10.8.0.0/20  icmp,tcp:0-65535,udp:0-65535
+semaphore-vpc-hardened-allow-master-nodes      INGRESS    1000      172.16.0.0/28                                     tcp:443,tcp:10250             gke-node
+semaphore-vpc-hardened-allow-ssh-bastion       INGRESS    1000      185.173.30.161/32                                 tcp:22                        bastion
+semaphore-vpc-hardened-allow-ssh-from-bastion  INGRESS    1000                                                        tcp:22                        gke-node
+semaphore-vpc-hardened-deny-all-ingress        INGRESS    65534     0.0.0.0/0
+
+=== Cloud NAT Configuration ===
+autoNetworkTier: PREMIUM
+enableEndpointIndependentMapping: false
+endpointTypes:
+- ENDPOINT_TYPE_VM
+icmpIdleTimeoutSec: 30
+logConfig:
+  enable: true
+  filter: ERRORS_ONLY
+maxPortsPerVm: 512
+minPortsPerVm: 64
+name: semaphore-vpc-hardened-nat
+natIpAllocateOption: AUTO_ONLY
+sourceSubnetworkIpRangesToNat: LIST_OF_SUBNETWORKS
+subnetworks:
+- name: https://www.googleapis.com/compute/v1/projects/semaphoreci-deployment/regions/us-central1/subnetworks/semaphore-vpc-hardened-gke-nodes
+  sourceIpRangesToNat:
+  - ALL_IP_RANGES
+tcpEstablishedIdleTimeoutSec: 1200
+tcpTimeWaitTimeoutSec: 120
+tcpTransitoryIdleTimeoutSec: 30
+type: PUBLIC
+udpIdleTimeoutSec: 30

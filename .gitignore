@@ -1,0 +1,31 @@
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+*.tfplan
+tfplan
+
+# Private keys
+*.key
+*.pem
+!*_test*.pem
+!test*.pem
+
+# Secrets
+.env
+*.env
+!*.env.example
+
+# Kubeconfig
+**/~/.kube/
+**/.kube/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

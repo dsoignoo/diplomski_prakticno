@@ -1,0 +1,95 @@
+# OpenTelemetry Instrumentation za automatsku instrumentaciju
+# Omogućava automatic tracing za Node.js, Python, i Java aplikacije
+
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: semaphore-instrumentation
+  namespace: semaphore
+spec:
+  # Exporter configuration - šalje trace-ove u Jaeger collector
+  exporter:
+    endpoint: http://semaphore-jaeger-collector.observability:4318
+
+  # Propagators - kako će se trace context proslijeđivati
+  propagators:
+    - tracecontext
+    - baggage
+    - b3
+
+  # Sampler - koliko trace-ova snimiti (100% za dev, 10% za prod)
+  sampler:
+    type: parentbased_traceidratio
+    argument: "0.1"  # 10% sampling u produkciji
+
+  # Node.js auto-instrumentation (za Semaphore API servise)
+  nodejs:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.45.0
+    env:
+      - name: OTEL_TRACES_EXPORTER
+        value: otlp
+      - name: OTEL_METRICS_EXPORTER
+        value: none
+      - name: OTEL_LOGS_EXPORTER
+        value: none
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://semaphore-jaeger-collector.observability:4318
+      # Service name će biti preuzet iz pod labela
+      - name: OTEL_SERVICE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['app']
+      # Dodatne Node.js specific opcije
+      - name: OTEL_NODE_RESOURCE_DETECTORS
+        value: env,host,os,serviceinstance
+      - name: OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST
+        value: "content-type,authorization"
+      - name: OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE
+        value: "content-type"
+
+  # Python auto-instrumentation (ako postoje Python servisi)
+  python:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python:0.42b0
+    env:
+      - name: OTEL_TRACES_EXPORTER
+        value: otlp
+      - name: OTEL_METRICS_EXPORTER
+        value: none
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
+
+  # Java auto-instrumentation (ako postoje Java servisi)
+  java:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:1.32.0
+    env:
+      - name: OTEL_TRACES_EXPORTER
+        value: otlp
+      - name: OTEL_METRICS_EXPORTER
+        value: none
+
+---
+# Annotation za auto-instrumentation:
+# Dodati na Semaphore deployment-e:
+#
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: guard
+#   namespace: semaphore
+#   annotations:
+#     instrumentation.opentelemetry.io/inject-nodejs: "true"
+# spec:
+#   template:
+#     metadata:
+#       labels:
+#         app: guard
+#     spec:
+#       containers:
+#       - name: guard
+#         image: semaphoreui/guard:latest
+
+---
+# Example: Patch za postojeće deploymenta
+# kubectl patch deployment guard -n semaphore -p '{"metadata":{"annotations":{"instrumentation.opentelemetry.io/inject-nodejs":"true"}}}'

@@ -1,0 +1,343 @@
+# Semaphore CI/CD Pipeline: Parallel Container Security Scanning
+#
+# Improvements over basic pipeline:
+# - Parallel scanning of all images (faster execution)
+# - Individual reports pushed to workflow-level artifacts
+# - Final aggregation job creates comprehensive REPORT.md
+# - Better artifact organization
+
+version: v1.0
+name: Security Scanning Pipeline (Improved)
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2204
+
+blocks:
+  - name: "Parallel Vulnerability Scanning"
+    task:
+      prologue:
+        commands:
+          - checkout
+          # Install Trivy
+          - wget -q https://github.com/aquasecurity/trivy/releases/download/v0.50.1/trivy_0.50.1_Linux-64bit.tar.gz
+          - tar -xzf trivy_0.50.1_Linux-64bit.tar.gz
+          - sudo mv trivy /usr/local/bin/
+          - trivy --version
+          # Create reports directory
+          - mkdir -p reports
+
+      jobs:
+        - name: "Scan: Guard"
+          commands:
+            - IMAGE="ghcr.io/semaphoreio/guard:71d97737dcd4c147dd48d8971b14a2e0f4b92710"
+            - SERVICE="guard"
+            - echo "Scanning $SERVICE..."
+
+            # Scan and generate reports
+            - |
+              trivy image \
+                --severity HIGH,CRITICAL \
+                --format json \
+                --output "reports/${SERVICE}.json" \
+                "$IMAGE" || true
+
+            - |
+              trivy image \
+                --severity HIGH,CRITICAL \
+                --format table \
+                "$IMAGE" > "reports/${SERVICE}.txt"
+
+            # Extract vulnerability counts
+            - |
+              CRITICAL=$(jq -r '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' "reports/${SERVICE}.json" 2>/dev/null || echo 0)
+              HIGH=$(jq -r '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' "reports/${SERVICE}.json" 2>/dev/null || echo 0)
+              echo "$SERVICE,$CRITICAL,$HIGH" > "reports/${SERVICE}.csv"
+
+            # Push to workflow artifacts
+            - artifact push workflow -f reports/${SERVICE}.json
+            - artifact push workflow -f reports/${SERVICE}.txt
+            - artifact push workflow -f reports/${SERVICE}.csv
+
+            - echo "✅ Scan complete for $SERVICE"
+
+        - name: "Scan: Front"
+          commands:
+            - IMAGE="ghcr.io/semaphoreio/front:c4bdd9c00662df0ccc0f0a5731d81e39b96ea844"
+            - SERVICE="front"
+            - echo "Scanning $SERVICE..."
+
+            - mkdir -p reports
+            - |
+              trivy image \
+                --severity HIGH,CRITICAL \
+                --format json \
+                --output "reports/${SERVICE}.json" \
+                "$IMAGE" || true
+
+            - |
+              trivy image \
+                --severity HIGH,CRITICAL \
+                --format table \
+                "$IMAGE" > "reports/${SERVICE}.txt"
+
+            - |
+              CRITICAL=$(jq -r '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' "reports/${SERVICE}.json" 2>/dev/null || echo 0)
+              HIGH=$(jq -r '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' "reports/${SERVICE}.json" 2>/dev/null || echo 0)
+              echo "$SERVICE,$CRITICAL,$HIGH" > "reports/${SERVICE}.csv"
+
+            - artifact push workflow -f reports/${SERVICE}.json
+            - artifact push workflow -f reports/${SERVICE}.txt
+            - artifact push workflow -f reports/${SERVICE}.csv
+
+            - echo "✅ Scan complete for $SERVICE"
+
+        - name: "Scan: Auth"
+          commands:
+            - IMAGE="ghcr.io/semaphoreio/auth:570873cccc0c443e433697a0efb7a3f33d6f3ecd"
+            - SERVICE="auth"
+            - echo "Scanning $SERVICE..."
+
+            - mkdir -p reports
+            - |
+              trivy image \
+                --severity HIGH,CRITICAL \
+                --format json \
+                --output "reports/${SERVICE}.json" \
+                "$IMAGE" || true
+
+            - |
+              trivy image \
+                --severity HIGH,CRITICAL \
+                --format table \
+                "$IMAGE" > "reports/${SERVICE}.txt"
+
+            - |
+              CRITICAL=$(jq -r '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' "reports/${SERVICE}.json" 2>/dev/null || echo 0)
+              HIGH=$(jq -r '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' "reports/${SERVICE}.json" 2>/dev/null || echo 0)
+              echo "$SERVICE,$CRITICAL,$HIGH" > "reports/${SERVICE}.csv"
+
+            - artifact push workflow -f reports/${SERVICE}.json
+            - artifact push workflow -f reports/${SERVICE}.txt
+            - artifact push workflow -f reports/${SERVICE}.csv
+
+            - echo "✅ Scan complete for $SERVICE"
+
+        - name: "Scan: ProjectHub"
+          commands:
+            - IMAGE="ghcr.io/semaphoreio/projecthub:9480e60fb47ca8d7caf3cfd7ddcdaa0f5ffd2ced"
+            - SERVICE="projecthub"
+            - echo "Scanning $SERVICE..."
+
+            - mkdir -p reports
+            - |
+              trivy image \
+                --severity HIGH,CRITICAL \
+                --format json \
+                --output "reports/${SERVICE}.json" \
+                "$IMAGE" || true
+
+            - |
+              trivy image \
+                --severity HIGH,CRITICAL \
+                --format table \
+                "$IMAGE" > "reports/${SERVICE}.txt"
+
+            - |
+              CRITICAL=$(jq -r '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' "reports/${SERVICE}.json" 2>/dev/null || echo 0)
+              HIGH=$(jq -r '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' "reports/${SERVICE}.json" 2>/dev/null || echo 0)
+              echo "$SERVICE,$CRITICAL,$HIGH" > "reports/${SERVICE}.csv"
+
+            - artifact push workflow -f reports/${SERVICE}.json
+            - artifact push workflow -f reports/${SERVICE}.txt
+            - artifact push workflow -f reports/${SERVICE}.csv
+
+            - echo "✅ Scan complete for $SERVICE"
+
+        - name: "Scan: Bootstrapper"
+          commands:
+            - IMAGE="ghcr.io/semaphoreio/bootstrapper:3dc98d61830f896779dcbc8ac351937a767246a9"
+            - SERVICE="bootstrapper"
+            - echo "Scanning $SERVICE..."
+
+            - mkdir -p reports
+            - |
+              trivy image \
+                --severity HIGH,CRITICAL \
+                --format json \
+                --output "reports/${SERVICE}.json" \
+                "$IMAGE" || true
+
+            - |
+              trivy image \
+                --severity HIGH,CRITICAL \
+                --format table \
+                "$IMAGE" > "reports/${SERVICE}.txt"
+
+            - |
+              CRITICAL=$(jq -r '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' "reports/${SERVICE}.json" 2>/dev/null || echo 0)
+              HIGH=$(jq -r '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' "reports/${SERVICE}.json" 2>/dev/null || echo 0)
+              echo "$SERVICE,$CRITICAL,$HIGH" > "reports/${SERVICE}.csv"
+
+            - artifact push workflow -f reports/${SERVICE}.json
+            - artifact push workflow -f reports/${SERVICE}.txt
+            - artifact push workflow -f reports/${SERVICE}.csv
+
+            - echo "✅ Scan complete for $SERVICE"
+
+  - name: "Generate Security Report"
+    task:
+      prologue:
+        commands:
+          - checkout
+
+      jobs:
+        - name: "Aggregate Results"
+          commands:
+            - echo "Collecting scan results from all jobs..."
+
+            # Pull all artifacts from workflow
+            - artifact pull workflow *.json
+            - artifact pull workflow *.txt
+            - artifact pull workflow *.csv
+
+            # List what we received
+            - echo "Artifacts received:"
+            - ls -lh *.{json,txt,csv} 2>/dev/null || echo "No artifacts found"
+
+            # Generate master report
+            - |
+              cat > REPORT.md <<'EOFR'
+              # Semaphore Security Scan Report
+
+              **Generated**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+              **Pipeline**: Security Scanning (Parallel)
+              **Total Images Scanned**: 5
+
+              ---
+
+              ## Summary
+
+              | Service | Critical | High | Status |
+              |---------|----------|------|--------|
+              EOFR
+
+            # Add results from CSV files
+            - |
+              TOTAL_CRITICAL=0
+              TOTAL_HIGH=0
+              for csv in *.csv; do
+                if [ -f "$csv" ]; then
+                  SERVICE=$(cut -d',' -f1 "$csv")
+                  CRITICAL=$(cut -d',' -f2 "$csv")
+                  HIGH=$(cut -d',' -f3 "$csv")
+
+                  TOTAL_CRITICAL=$((TOTAL_CRITICAL + CRITICAL))
+                  TOTAL_HIGH=$((TOTAL_HIGH + HIGH))
+
+                  if [ "$CRITICAL" -gt 0 ]; then
+                    STATUS="❌ CRITICAL"
+                  elif [ "$HIGH" -gt 5 ]; then
+                    STATUS="⚠️  HIGH"
+                  else
+                    STATUS="✅ PASS"
+                  fi
+
+                  echo "| $SERVICE | $CRITICAL | $HIGH | $STATUS |" >> REPORT.md
+                fi
+              done
+
+            # Add totals
+            - |
+              cat >> REPORT.md <<EOFR
+              | **TOTAL** | **$TOTAL_CRITICAL** | **$TOTAL_HIGH** | - |
+
+              ---
+
+              ## Detailed Findings
+
+              EOFR
+
+            # Append detailed reports for each service
+            - |
+              for txt in *.txt; do
+                if [ -f "$txt" ]; then
+                  SERVICE=$(basename "$txt" .txt)
+                  echo "" >> REPORT.md
+                  echo "### $SERVICE" >> REPORT.md
+                  echo "" >> REPORT.md
+                  echo '```' >> REPORT.md
+                  cat "$txt" >> REPORT.md
+                  echo '```' >> REPORT.md
+                  echo "" >> REPORT.md
+                fi
+              done
+
+            # Add recommendations
+            - |
+              cat >> REPORT.md <<'EOFR'
+
+              ---
+
+              ## Recommendations
+
+              - **Critical Vulnerabilities**: Prioritize images with CRITICAL vulnerabilities for immediate remediation
+              - **High Vulnerabilities**: Schedule updates for images with HIGH vulnerabilities
+              - **Regular Scans**: Run this pipeline regularly (e.g., weekly) to catch new vulnerabilities
+              - **Image Updates**: Consider updating base images and dependencies
+              - **Vulnerability Database**: Ensure Trivy vulnerability database is up to date
+
+              ## Next Steps
+
+              1. Review individual image sections above for detailed vulnerability information
+              2. Create tickets for images requiring updates
+              3. Monitor CVE feeds for newly disclosed vulnerabilities
+              4. Consider implementing automated image rebuilds when vulnerabilities are patched
+
+              ---
+
+              **Report End**
+              EOFR
+
+            # Show report summary
+            - echo ""
+            - echo "========================================="
+            - echo "Security Report Generated"
+            - echo "========================================="
+            - cat REPORT.md | head -30
+            - echo "..."
+            - echo ""
+
+            # Push final report as workflow artifact
+            - artifact push workflow -f -d .semaphore/REPORT.md REPORT.md
+
+            # Check if deployment should be blocked
+            - |
+              if [ $TOTAL_CRITICAL -gt 0 ]; then
+                echo "❌ DEPLOYMENT BLOCKED: $TOTAL_CRITICAL CRITICAL vulnerabilities found"
+                exit 1
+              else
+                echo "✅ SECURITY CHECK PASSED: No CRITICAL vulnerabilities"
+                exit 0
+              fi
+
+  - name: "Image Signing (Future)"
+    run:
+      when: "branch = 'main' AND result = 'passed'"
+    task:
+      jobs:
+        - name: "Sign Container Images"
+          commands:
+            - echo "Image signing with Cosign will be implemented in Phase 03 Step 2"
+            - echo "Placeholder for: Cosign installation, signing, and verification"
+
+promotions:
+  - name: Deploy to Staging
+    pipeline_file: deploy-staging.yml
+    auto_promote:
+      when: "result = 'passed' AND branch = 'main'"
+
+  - name: Deploy to Production
+    pipeline_file: deploy-production.yml
+    auto_promote:
+      when: "result = 'passed' AND branch = 'release/*'"

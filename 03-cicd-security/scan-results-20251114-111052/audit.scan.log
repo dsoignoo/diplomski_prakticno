@@ -1,0 +1,8 @@
+2025-11-14T11:11:55.493+0100	[34mINFO[0m	Vulnerability scanning is enabled
+2025-11-14T11:11:55.493+0100	[34mINFO[0m	Secret scanning is enabled
+2025-11-14T11:11:55.493+0100	[34mINFO[0m	If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2025-11-14T11:11:55.493+0100	[34mINFO[0m	Please see also https://aquasecurity.github.io/trivy/v0.50/docs/scanner/secret/#recommendation for faster secret detection
+2025-11-14T11:12:00.892+0100	[34mINFO[0m	Detected OS: alpine
+2025-11-14T11:12:00.893+0100	[33mWARN[0m	This OS version is not on the EOL list: alpine 3.21
+2025-11-14T11:12:00.893+0100	[34mINFO[0m	Detecting Alpine vulnerabilities...
+2025-11-14T11:12:00.895+0100	[34mINFO[0m	Number of language-specific files: 0

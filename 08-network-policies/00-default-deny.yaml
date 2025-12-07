@@ -1,0 +1,21 @@
+# Default-Deny NetworkPolicy za Semaphore namespace
+# Blokira sav ingress i egress traffic by default
+# Komponente moraju imati eksplicitne policies za komunikaciju
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: semaphore
+  labels:
+    app.kubernetes.io/name: semaphore
+    app.kubernetes.io/component: network-policy
+    security.semaphore.io/policy: default-deny
+spec:
+  # Applies to ALL pods in semaphore namespace
+  podSelector: {}
+
+  # Block both ingress and egress by default
+  policyTypes:
+  - Ingress
+  - Egress

@@ -1,0 +1,148 @@
+# Prometheus ServiceMonitor - Generic Kubernetes Pod Monitoring
+# ServiceMonitor za automatsko otkrivanje i prikupljanje metrika
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kubernetes-pods
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: servicemonitor
+spec:
+  selector:
+    matchLabels:
+      monitored: "true"
+  namespaceSelector:
+    any: true
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    scrapeTimeout: 10s
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+    - sourceLabels: [__meta_kubernetes_namespace]
+      targetLabel: namespace
+    - sourceLabels: [__meta_kubernetes_pod_label_app]
+      targetLabel: app
+    - sourceLabels: [__meta_kubernetes_pod_label_component]
+      targetLabel: component
+---
+# ServiceMonitor za Semaphore specifične servise
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: semaphore-services
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: semaphore
+spec:
+  selector:
+    matchLabels:
+      monitoring: "true"
+  namespaceSelector:
+    matchNames:
+    - default
+    - semaphore
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+    scrapeTimeout: 10s
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+      replacement: $1
+    - sourceLabels: [__meta_kubernetes_namespace]
+      targetLabel: namespace
+      replacement: $1
+    - sourceLabels: [__meta_kubernetes_pod_label_app]
+      targetLabel: app
+      replacement: $1
+    - sourceLabels: [__meta_kubernetes_pod_label_component]
+      targetLabel: component
+      replacement: $1
+    - sourceLabels: [__meta_kubernetes_service_name]
+      targetLabel: service
+      replacement: $1
+---
+# ServiceMonitor za PostgreSQL
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: postgresql-monitor
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgresql
+  namespaceSelector:
+    any: true
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+---
+# ServiceMonitor za Redis
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: redis-monitor
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  namespaceSelector:
+    any: true
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+---
+# ServiceMonitor za RabbitMQ
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: rabbitmq-monitor
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+  namespaceSelector:
+    any: true
+  endpoints:
+  - port: prometheus
+    interval: 30s
+    path: /metrics
+---
+# PodMonitor za podove bez Service-a
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: semaphore-pods
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      prometheus.io/scrape: "true"
+  namespaceSelector:
+    matchNames:
+    - semaphore
+    - default
+  podMetricsEndpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics

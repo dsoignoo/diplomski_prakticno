@@ -1,0 +1,167 @@
+# Jaeger Instance za Semaphore tracing
+# Production-ready konfiguracija sa Elasticsearch backend storage
+
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: semaphore-jaeger
+  namespace: observability
+spec:
+  strategy: production  # production strategy sa collector, query, i storage
+
+  # Storage - Elasticsearch
+  storage:
+    type: elasticsearch
+    options:
+      es:
+        server-urls: http://elasticsearch:9200
+        index-prefix: jaeger
+        # Retention period
+        max-span-age: 72h  # 3 dana
+    esIndexCleaner:
+      enabled: true
+      numberOfDays: 3
+      schedule: "55 23 * * *"  # Svaki dan u 23:55
+
+  # Collector configuration
+  collector:
+    replicas: 2
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 512Mi
+    maxReplicas: 5
+    autoscale: true
+
+    # Service configuration
+    service:
+      type: ClusterIP
+
+    # OpenTelemetry collector config
+    config: |
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+            http:
+              endpoint: 0.0.0.0:4318
+        jaeger:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:14250
+            thrift_http:
+              endpoint: 0.0.0.0:14268
+            thrift_compact:
+              endpoint: 0.0.0.0:6831
+            thrift_binary:
+              endpoint: 0.0.0.0:6832
+        zipkin:
+          endpoint: 0.0.0.0:9411
+
+      processors:
+        batch:
+          timeout: 5s
+          send_batch_size: 1024
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 512
+
+      exporters:
+        jaeger:
+          endpoint: semaphore-jaeger-collector:14250
+          tls:
+            insecure: true
+
+      service:
+        pipelines:
+          traces:
+            receivers: [otlp, jaeger, zipkin]
+            processors: [memory_limiter, batch]
+            exporters: [jaeger]
+
+  # Query (UI) configuration
+  query:
+    replicas: 2
+    resources:
+      limits:
+        cpu: 300m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+    # Ingress za Jaeger UI
+    ingress:
+      enabled: true
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      hosts:
+        - jaeger.semaphore.example.com
+      tls:
+        - secretName: jaeger-tls
+          hosts:
+            - jaeger.semaphore.example.com
+
+    # ServiceMonitor za Prometheus
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: prometheus
+
+  # Agent configuration (ako koristimo sidecar pattern)
+  agent:
+    strategy: DaemonSet  # Agent na svakom node-u
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+  # Annotations za automatic sidecar injection
+  annotations:
+    sidecar.jaegertracing.io/inject: "true"
+
+---
+# ServiceMonitor za Jaeger Collector
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: jaeger-collector
+  namespace: observability
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: jaeger
+      app.kubernetes.io/component: collector
+  endpoints:
+  - port: admin-http
+    interval: 30s
+    path: /metrics
+
+---
+# ServiceMonitor za Jaeger Query
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: jaeger-query
+  namespace: observability
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: jaeger
+      app.kubernetes.io/component: query
+  endpoints:
+  - port: admin-http
+    interval: 30s
+    path: /metrics

@@ -1,0 +1,11 @@
+=== Security Features ===
+Checking KMS encryption...
+currentState=CURRENT_STATE_ENCRYPTED;keyName=projects/semaphoreci-deployment/locations/us-central1/keyRings/semaphore-hardened-keyring/cryptoKeys/semaphore-hardened-secrets-key;state=ENCRYPTED
+
+=== Shielded Nodes ===
+
+=== Workload Identity ===
+workloadPool=semaphoreci-deployment.svc.id.goog
+
+=== Private Cluster Config ===
+enablePrivateEndpoint=True;enablePrivateNodes=True;masterIpv4CidrBlock=172.16.0.0/28;privateEndpoint=172.16.0.2;publicEndpoint=136.114.199.39

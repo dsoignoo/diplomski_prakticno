@@ -1,0 +1,299 @@
+# Prometheus AlertRules za Semaphore
+# SLO-based i infrastructure alerts
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: semaphore-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  groups:
+  # ========================================
+  # SLO Alerts (Service Level Objectives)
+  # ========================================
+  - name: semaphore-slo
+    interval: 30s
+    rules:
+    # Error Budget: 99.9% uptime = 0.1% error budget
+    - alert: ErrorBudgetBurn
+      expr: |
+        (
+          sum(rate(http_requests_total{namespace="semaphore",status=~"5.."}[1h]))
+          /
+          sum(rate(http_requests_total{namespace="semaphore"}[1h]))
+        ) > 0.001
+      for: 5m
+      labels:
+        severity: critical
+        slo: availability
+      annotations:
+        summary: "Error budget burning too fast"
+        description: "Error rate {{ $value | humanizePercentage }} exceeds SLO (0.1%)"
+
+    # Latency SLO: 95% of requests < 500ms
+    - alert: LatencySLOViolation
+      expr: |
+        histogram_quantile(0.95,
+          sum(rate(http_request_duration_seconds_bucket{namespace="semaphore"}[5m])) by (le, app)
+        ) > 0.5
+      for: 10m
+      labels:
+        severity: warning
+        slo: latency
+      annotations:
+        summary: "P95 latency exceeds SLO"
+        description: "{{ $labels.app }} P95 latency: {{ $value }}s (SLO: 500ms)"
+
+  # ========================================
+  # Application Alerts
+  # ========================================
+  - name: semaphore-application
+    interval: 30s
+    rules:
+    # High Error Rate
+    - alert: HighErrorRate
+      expr: |
+        sum(rate(http_requests_total{namespace="semaphore",status=~"5.."}[5m])) by (app)
+        /
+        sum(rate(http_requests_total{namespace="semaphore"}[5m])) by (app)
+        > 0.05
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High error rate in {{ $labels.app }}"
+        description: "Error rate: {{ $value | humanizePercentage }} (threshold: 5%)"
+
+    # Pod Down
+    - alert: SemaphorePodDown
+      expr: kube_pod_status_phase{namespace="semaphore",phase!="Running"} == 1
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Semaphore pod down"
+        description: "Pod {{ $labels.pod }} is in {{ $labels.phase }} state"
+
+    # Pod Restart Loop
+    - alert: PodRestartLoop
+      expr: rate(kube_pod_container_status_restarts_total{namespace="semaphore"}[15m]) > 0
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Pod restarting frequently"
+        description: "Pod {{ $labels.pod }} restarted {{ $value }} times in last 15m"
+
+    # High Memory Usage
+    - alert: HighMemoryUsage
+      expr: |
+        (
+          sum(container_memory_working_set_bytes{namespace="semaphore"}) by (pod)
+          /
+          sum(container_spec_memory_limit_bytes{namespace="semaphore"}) by (pod)
+        ) > 0.9
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High memory usage"
+        description: "Pod {{ $labels.pod }}: {{ $value | humanizePercentage }} of limit"
+
+    # High CPU Usage
+    - alert: HighCPUUsage
+      expr: |
+        (
+          sum(rate(container_cpu_usage_seconds_total{namespace="semaphore"}[5m])) by (pod)
+          /
+          sum(container_spec_cpu_quota{namespace="semaphore"} / container_spec_cpu_period{namespace="semaphore"}) by (pod)
+        ) > 0.9
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage"
+        description: "Pod {{ $labels.pod }}: {{ $value | humanizePercentage }} of limit"
+
+  # ========================================
+  # Database Alerts (PostgreSQL)
+  # ========================================
+  - name: postgresql
+    interval: 30s
+    rules:
+    # Connection Pool Exhaustion
+    - alert: PostgreSQLConnectionPoolExhausted
+      expr: |
+        (
+          pg_stat_database_numbackends{namespace="semaphore"}
+          /
+          pg_settings_max_connections{namespace="semaphore"}
+        ) > 0.8
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "PostgreSQL connection pool near exhaustion"
+        description: "Using {{ $value | humanizePercentage }} of max connections"
+
+    # Slow Queries
+    - alert: PostgreSQLSlowQueries
+      expr: pg_stat_activity_max_tx_duration{namespace="semaphore"} > 60
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "PostgreSQL slow queries detected"
+        description: "Longest running query: {{ $value }}s"
+
+    # Database Down
+    - alert: PostgreSQLDown
+      expr: pg_up{namespace="semaphore"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "PostgreSQL is down"
+        description: "PostgreSQL database is unreachable"
+
+    # Replication Lag (ako postoji replica)
+    - alert: PostgreSQLReplicationLag
+      expr: pg_replication_lag{namespace="semaphore"} > 30
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "PostgreSQL replication lag"
+        description: "Replication lag: {{ $value }}s (threshold: 30s)"
+
+  # ========================================
+  # Message Queue Alerts (RabbitMQ)
+  # ========================================
+  - name: rabbitmq
+    interval: 30s
+    rules:
+    # Queue Length Growing
+    - alert: RabbitMQQueueLengthGrowing
+      expr: |
+        (
+          rabbitmq_queue_messages{namespace="semaphore"}
+          -
+          rabbitmq_queue_messages{namespace="semaphore"} offset 5m
+        ) > 100
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "RabbitMQ queue length growing"
+        description: "Queue {{ $labels.queue }} growing: {{ $value }} messages added in 5m"
+
+    # No Consumers
+    - alert: RabbitMQNoConsumers
+      expr: rabbitmq_queue_consumers{namespace="semaphore"} == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "RabbitMQ queue has no consumers"
+        description: "Queue {{ $labels.queue }} has 0 consumers"
+
+    # RabbitMQ Down
+    - alert: RabbitMQDown
+      expr: rabbitmq_up{namespace="semaphore"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "RabbitMQ is down"
+        description: "RabbitMQ is unreachable"
+
+  # ========================================
+  # Security Alerts (Falco Integration)
+  # ========================================
+  - name: security
+    interval: 30s
+    rules:
+    # Critical Security Event
+    - alert: FalcoCriticalSecurityEvent
+      expr: increase(falco_events_total{priority="Critical"}[5m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        security: "true"
+      annotations:
+        summary: "Falco detected critical security event"
+        description: "Rule: {{ $labels.rule }}, Count: {{ $value }}"
+
+    # Shell Execution in Production
+    - alert: ShellExecutionDetected
+      expr: increase(falco_events_total{rule=~".*shell.*"}[5m]) > 0
+      for: 1m
+      labels:
+        severity: warning
+        security: "true"
+      annotations:
+        summary: "Shell execution detected in production pod"
+        description: "Pod: {{ $labels.k8s_pod_name }}, Count: {{ $value }}"
+
+    # Unauthorized Secret Access
+    - alert: UnauthorizedSecretAccess
+      expr: increase(falco_events_total{rule=~".*secret.*"}[5m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        security: "true"
+      annotations:
+        summary: "Unauthorized secret access attempt"
+        description: "Pod: {{ $labels.k8s_pod_name }}, Count: {{ $value }}"
+
+  # ========================================
+  # Infrastructure Alerts
+  # ========================================
+  - name: infrastructure
+    interval: 1m
+    rules:
+    # Node NotReady
+    - alert: NodeNotReady
+      expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Node is not ready"
+        description: "Node {{ $labels.node }} is not ready"
+
+    # Node Memory Pressure
+    - alert: NodeMemoryPressure
+      expr: kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Node under memory pressure"
+        description: "Node {{ $labels.node }} is under memory pressure"
+
+    # Node Disk Pressure
+    - alert: NodeDiskPressure
+      expr: kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Node under disk pressure"
+        description: "Node {{ $labels.node }} is under disk pressure"
+
+    # Persistent Volume Usage High
+    - alert: PersistentVolumeUsageHigh
+      expr: |
+        (
+          kubelet_volume_stats_used_bytes{namespace="semaphore"}
+          /
+          kubelet_volume_stats_capacity_bytes{namespace="semaphore"}
+        ) > 0.8
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Persistent Volume usage high"
+        description: "PVC {{ $labels.persistentvolumeclaim }}: {{ $value | humanizePercentage }} full"

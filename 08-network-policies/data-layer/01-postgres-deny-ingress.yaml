@@ -1,0 +1,14 @@
+# Network Policy: Deny all ingress to PostgreSQL
+# Only explicitly allowed pods can connect to the database
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-deny-ingress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+  - Ingress
+  ingress: []  # Empty list = deny all ingress

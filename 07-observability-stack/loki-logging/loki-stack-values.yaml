@@ -1,0 +1,216 @@
+# Helm values za Loki stack (loki + promtail)
+# Instalacija: helm install loki grafana/loki-stack -f loki-stack-values.yaml -n monitoring
+
+loki:
+  enabled: true
+
+  # Persistence za Loki data
+  persistence:
+    enabled: true
+    storageClassName: standard-rwo
+    size: 10Gi
+
+  # Loki config
+  config:
+    auth_enabled: false
+
+    ingester:
+      chunk_idle_period: 3m
+      chunk_block_size: 262144
+      chunk_retain_period: 1m
+      max_transfer_retries: 0
+      lifecycler:
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+
+    limits_config:
+      enforce_metric_name: false
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h  # 7 dana
+      retention_period: 744h  # 31 dan
+      max_entries_limit_per_query: 5000
+      max_streams_per_user: 0
+      max_global_streams_per_user: 0
+
+    schema_config:
+      configs:
+      - from: 2024-01-01
+        store: boltdb-shipper
+        object_store: filesystem
+        schema: v11
+        index:
+          prefix: index_
+          period: 24h
+
+    server:
+      http_listen_port: 3100
+      grpc_listen_port: 9096
+
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /data/loki/boltdb-shipper-active
+        cache_location: /data/loki/boltdb-shipper-cache
+        cache_ttl: 24h
+        shared_store: filesystem
+      filesystem:
+        directory: /data/loki/chunks
+
+    chunk_store_config:
+      max_look_back_period: 744h  # 31 dan
+
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 744h  # 31 dan
+
+    compactor:
+      working_directory: /data/loki/boltdb-shipper-compactor
+      shared_store: filesystem
+      retention_enabled: true
+      retention_delete_delay: 2h
+      retention_delete_worker_count: 150
+
+  # Resources
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+
+  # Service
+  service:
+    type: ClusterIP
+    port: 3100
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "3100"
+
+  # ServiceMonitor za Prometheus
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    additionalLabels:
+      release: prometheus
+
+promtail:
+  enabled: true
+
+  # Promtail config za Semaphore namespace
+  config:
+    lokiAddress: http://{{ include "loki.serviceName" . }}:{{ .Values.loki.service.port }}/loki/api/v1/push
+
+    snippets:
+      pipelineStages:
+        - cri: {}
+        - regex:
+            expression: '^(?P<time>[^ ]+) (?P<stream>stdout|stderr) (?P<flags>[^ ]+) (?P<message>.*)$'
+        - labels:
+            stream:
+        - timestamp:
+            source: time
+            format: RFC3339Nano
+        - output:
+            source: message
+
+    # Scrape samo Semaphore namespace + Falco
+    scrapeConfigs: |
+      - job_name: kubernetes-pods-semaphore
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - semaphore
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: __host__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - action: replace
+            replacement: $1
+            separator: /
+            source_labels:
+              - __meta_kubernetes_namespace
+              - __meta_kubernetes_pod_name
+            target_label: job
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_namespace
+            target_label: namespace
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_pod_name
+            target_label: pod
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_pod_container_name
+            target_label: container
+          - replacement: /var/log/pods/*$1/*.log
+            separator: /
+            source_labels:
+              - __meta_kubernetes_pod_uid
+              - __meta_kubernetes_pod_container_name
+            target_label: __path__
+
+      # Falco logs
+      - job_name: kubernetes-pods-falco
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - falco
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: __host__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_namespace
+            target_label: namespace
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_pod_name
+            target_label: pod
+          - replacement: /var/log/pods/*$1/*.log
+            separator: /
+            source_labels:
+              - __meta_kubernetes_pod_uid
+              - __meta_kubernetes_pod_container_name
+            target_label: __path__
+
+  # Resources
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  # DaemonSet deployment na svakom node-u
+  tolerations:
+    - effect: NoSchedule
+      operator: Exists
+
+  # ServiceMonitor
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    additionalLabels:
+      release: prometheus
+
+# Grafana datasource za Loki (ako nije već konfigurisan)
+grafana:
+  enabled: false  # Već imamo Grafana iz prometheus-operator
+  # Ali trebamo dodati datasource kroz ConfigMap
+
+# Fluent Bit kao alternativa Promtail-u (opciono)
+fluent-bit:
+  enabled: false
+
+# filebeat za shipping logova u Elasticsearch (za SIEM)
+filebeat:
+  enabled: false

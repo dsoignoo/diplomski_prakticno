@@ -1,0 +1,37 @@
+# Pod Security Context primjer
+# Ovaj primjer pokazuje kako konfigurirati sigurnosni kontekst za pod
+# koji pristupa osjetljivim podacima
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sigurni-pod
+  namespace: semaphore
+  labels:
+    app: secure-app
+spec:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
+  containers:
+  - name: app-kontejner
+    image: moja-aplikacija:v1
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+    volumeMounts:
+    - name: secret-volume
+      mountPath: /etc/secrets
+      readOnly: true
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: secret-volume
+    secret:
+      secretName: app-secrets
+      defaultMode: 0400  # Samo vlasnik može čitati
+  - name: tmp
+    emptyDir: {}
