@@ -29,3 +29,23 @@ tfplan
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code
+CLAUDE.md
+.claude/
+
+# Thesis working files (not for commit)
+THESIS_DATA_COLLECTION_GUIDE.md
+THESIS_DEFENSE_QUICK_REFERENCE.md
+FAZA_*.md
+sofar.md
+
+# Binaries
+03-cicd-security/trivy/trivy
+*.exe
+*.bin
+*.so
+*.dll
+
+# Large upstream projects
+semaphore/
